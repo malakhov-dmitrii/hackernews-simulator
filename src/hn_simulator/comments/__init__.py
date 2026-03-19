@@ -1,0 +1,1 @@
+"""HN comment generation module."""
