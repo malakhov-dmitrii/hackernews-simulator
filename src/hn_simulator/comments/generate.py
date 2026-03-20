@@ -1,4 +1,4 @@
-"""HN comment generation via Claude API."""
+"""HN comment generation via Claude CLI or API."""
 import json
 import logging
 import re
@@ -47,37 +47,42 @@ def generate_comments(
     client=None,
     num_comments: int = 5,
 ) -> list[dict]:
-    """Generate HN-style comments via Claude API.
+    """Generate HN-style comments via Claude CLI (headless) or mock client.
 
-    Creates anthropic.Anthropic() client if none provided.
-    Returns [] on API exception.
+    If client is provided (e.g. in tests), uses the client's messages.create API.
+    Otherwise, spawns headless Claude CLI — uses Claude Code subscription, no API key needed.
+    Returns [] on any error.
     """
-    if client is None:
-        import anthropic
-        client = anthropic.Anthropic()
+    system_prompt = build_system_prompt()
+    user_prompt = build_user_prompt(
+        title=title,
+        description=description,
+        predicted_score=predicted_score,
+        predicted_label=predicted_label,
+        similar_stories=similar_stories,
+        similar_comments=similar_comments,
+        num_comments=num_comments,
+    )
 
     try:
-        response = client.messages.create(
-            model=CLAUDE_MODEL,
-            max_tokens=2000,
-            system=build_system_prompt(),
-            messages=[
-                {
-                    "role": "user",
-                    "content": build_user_prompt(
-                        title=title,
-                        description=description,
-                        predicted_score=predicted_score,
-                        predicted_label=predicted_label,
-                        similar_stories=similar_stories,
-                        similar_comments=similar_comments,
-                        num_comments=num_comments,
-                    ),
-                }
-            ],
-        )
-        text = response.content[0].text
+        if client is not None:
+            # Mock client path (tests) or explicit API client
+            response = client.messages.create(
+                model=CLAUDE_MODEL,
+                max_tokens=2000,
+                system=system_prompt,
+                messages=[{"role": "user", "content": user_prompt}],
+            )
+            text = response.content[0].text
+        else:
+            # Headless Claude CLI — no API key needed
+            from hn_simulator.claude_runner import run_claude
+            text = run_claude(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                timeout_seconds=120,
+            )
         return parse_comments_response(text)
     except Exception as e:
-        logger.warning("Claude API error during comment generation: %s", e)
+        logger.warning("Comment generation error: %s", e)
         return []

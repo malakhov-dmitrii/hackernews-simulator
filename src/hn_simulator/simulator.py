@@ -95,8 +95,9 @@ class HNSimulator:
                 similar_comments.extend(comments)
 
         # 6. Generate AI comments if requested
+        # client=None triggers Claude CLI fallback in generate_comments()
         simulated_comments: list[dict] = []
-        if generate_comments and self.claude_client is not None:
+        if generate_comments:
             from hn_simulator.comments.generate import generate_comments as _generate_comments
 
             simulated_comments = _generate_comments(

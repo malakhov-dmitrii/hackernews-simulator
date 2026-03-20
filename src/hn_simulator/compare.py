@@ -104,12 +104,17 @@ def generate_comparison_explanation(ranked: list[dict], client=None) -> str:
         "improvement for each lower-ranked variant."
     )
 
-    response = client.messages.create(
-        model="claude-3-5-haiku-20241022",
-        max_tokens=300,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return response.content[0].text
+    try:
+        response = client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text
+    except Exception:
+        # Fallback to Claude CLI if client call fails
+        from hn_simulator.claude_runner import run_claude
+        return run_claude(prompt=prompt, timeout_seconds=60)
 
 
 def load_variants_from_file(path: Path | str) -> list[dict]:

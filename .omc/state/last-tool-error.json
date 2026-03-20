@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"uv run python scripts/train_model.py 2>&1\",\"timeout\":120000,\"description\":\"Train LightGBM models\"}",
+  "error": "Exit code 1\nLoading features from /Users/malakhov/code/hn-simulator/data/processed...\nFeature matrix: (2000, 397), cutoff: 2023-01-01\nLoading stories for temporal split...\nTemporal split: 0 train, 2000 val\nTraining score model...\n[LightGBM] [Fatal] Check failed: (num_data) > (0) at /Users/runner/work/LightGBM/LightGBM/lightgbm-python/src/io/dataset.cpp, line 39 .\n\nTraceback (most recent call last):\n  File \"/Users/malakhov/code/hn-simulator/scripts/train_model.py\", line 92, in <module>\n    main()...",
+  "timestamp": "2026-03-19T22:54:38.449Z",
+  "retry_count": 1
+}

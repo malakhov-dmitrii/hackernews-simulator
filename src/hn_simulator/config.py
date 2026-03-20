@@ -13,6 +13,12 @@ LANCEDB_DIR = DATA_DIR / "lancedb"
 # All item types in one dataset: type=1 (story), type=2 (comment), etc.
 HF_DATASET_URL = "hf://datasets/open-index/hacker-news/data/*/*.parquet"
 
+# For practical fetching, use specific years to avoid OOM on full glob
+HF_DATASET_YEARS = [
+    "hf://datasets/open-index/hacker-news/data/2024/*.parquet",
+    "hf://datasets/open-index/hacker-news/data/2025/*.parquet",
+]
+
 # Embedding model
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384

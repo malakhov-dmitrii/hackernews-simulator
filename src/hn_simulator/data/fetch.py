@@ -7,7 +7,7 @@ from typing import Generator
 import duckdb
 import pandas as pd
 
-from hn_simulator.config import HF_DATASET_URL
+from hn_simulator.config import HF_DATASET_URL, HF_DATASET_YEARS
 
 
 def build_stories_query(
@@ -114,11 +114,14 @@ def build_stratified_stories_query(
     else:
         order_expr = "random()"
 
+    # Build a read_parquet call over specific year files to avoid OOM on full glob
+    year_urls = ", ".join(f"'{u}'" for u in HF_DATASET_YEARS)
+    source = f"read_parquet([{year_urls}])"
+
     parts = []
     for score_filter, proportion in buckets:
         bucket_limit = max(1, int(total_limit * proportion))
-        parts.append(f"""
-SELECT
+        parts.append(f"""(SELECT
     id,
     title,
     url,
@@ -129,11 +132,11 @@ SELECT
     time,
     dead,
     deleted
-FROM '{HF_DATASET_URL}'
+FROM {source}
 WHERE {base_where}
   AND {score_filter}
 ORDER BY {order_expr}
-LIMIT {bucket_limit}""")
+LIMIT {bucket_limit})""")
 
     return "\nUNION ALL\n".join(parts).strip()
 

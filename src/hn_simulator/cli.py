@@ -41,9 +41,12 @@ def _human_output(title: str, result) -> None:
         click.echo("  --- Simulated Comments ---")
         click.echo()
         for comment in result.simulated_comments:
-            author = comment.get("author", "hn_user")
-            text = comment.get("text", "")
-            click.echo(f"  {author}: {text}")
+            author = comment.get("username", comment.get("author", "hn_user"))
+            text = comment.get("comment", comment.get("text", ""))
+            tone = comment.get("tone", "")
+            tone_str = f" [{tone}]" if tone else ""
+            click.echo(f"  {author}{tone_str}: {text}")
+            click.echo()
         click.echo()
     click.echo(sep)
 

@@ -55,6 +55,16 @@ def main(features_dir, models_dir, cutoff):
         y_score_train, y_score_val = y_score[train_pos], y_score[val_pos]
         y_comments_train, y_comments_val = y_comments[train_pos], y_comments[val_pos]
         click.echo(f"Temporal split: {len(train_pos)} train, {len(val_pos)} val")
+
+        # Fallback to 80/20 if temporal split gives empty train set
+        if len(train_pos) == 0:
+            click.echo("Temporal split empty — all data after cutoff. Falling back to 80/20 split.")
+            n = len(X)
+            split = int(n * 0.8)
+            X_train, X_val = X[:split], X[split:]
+            y_score_train, y_score_val = y_score[:split], y_score[split:]
+            y_comments_train, y_comments_val = y_comments[:split], y_comments[split:]
+            click.echo(f"Positional split: {split} train, {n - split} val")
     else:
         # Fallback: 80/20 split by position
         n = len(X)

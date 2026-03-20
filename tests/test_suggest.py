@@ -89,10 +89,14 @@ class TestSuggestVariants:
         suggestions = suggest_variants(original, client=mock_client)
         assert suggestions == []
 
-    def test_requires_client(self):
+    def test_without_client_falls_back_to_cli(self):
         from hn_simulator.suggest import suggest_variants
-        with pytest.raises(ValueError, match="client"):
-            suggest_variants({"title": "T", "description": "D"}, client=None)
+        from unittest.mock import patch
+        # Without client, should attempt Claude CLI (which we mock here)
+        with patch("hn_simulator.claude_runner.run_claude", return_value='[{"title": "CLI suggestion", "description": "via CLI"}]'):
+            suggestions = suggest_variants({"title": "T", "description": "D"}, client=None)
+            assert len(suggestions) == 1
+            assert suggestions[0]["title"] == "CLI suggestion"
 
 
 class TestSuggestAndScore:

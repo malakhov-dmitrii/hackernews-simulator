@@ -39,9 +39,6 @@ def suggest_variants(
     Raises:
         ValueError: If client is None.
     """
-    if client is None:
-        raise ValueError("suggest_variants requires a client — pass an Anthropic client instance")
-
     title = original.get("title", "")
     description = original.get("description", "")
 
@@ -52,14 +49,23 @@ def suggest_variants(
         f"Generate {num_suggestions} alternative title+description pairs as a JSON array."
     )
 
-    response = client.messages.create(
-        model="claude-3-5-haiku-20241022",
-        max_tokens=1024,
-        system=_SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
-    )
-
-    raw_text = response.content[0].text
+    if client is not None:
+        # Mock client path (tests) or explicit API client
+        response = client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=1024,
+            system=_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        raw_text = response.content[0].text
+    else:
+        # Headless Claude CLI — no API key needed
+        from hn_simulator.claude_runner import run_claude
+        raw_text = run_claude(
+            prompt=user_message,
+            system_prompt=_SYSTEM_PROMPT,
+            timeout_seconds=90,
+        )
     try:
         parsed = json.loads(raw_text)
         if not isinstance(parsed, list):
