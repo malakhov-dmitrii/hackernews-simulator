@@ -138,3 +138,105 @@ class TestSuggestAndScore:
 
         originals = [r for r in results if r["is_original"]]
         assert len(originals) == 1
+
+
+class TestIterativeOptimize:
+    def _make_client(self, suggestions_per_call):
+        """Return a mock client that cycles through suggestions_per_call lists."""
+        mock_client = MagicMock()
+        responses = []
+        for suggestions in suggestions_per_call:
+            mock_response = MagicMock()
+            mock_response.content = [MagicMock(text=json.dumps(suggestions))]
+            responses.append(mock_response)
+        mock_client.messages.create.side_effect = responses
+        return mock_client
+
+    def test_iterative_returns_dict_with_required_keys(self, mock_models_and_simulator):
+        from hn_simulator.suggest import iterative_optimize
+        sim = mock_models_and_simulator
+
+        mock_client = self._make_client([
+            [{"title": "Better Title A", "description": "Desc A"},
+             {"title": "Better Title B", "description": "Desc B"},
+             {"title": "Better Title C", "description": "Desc C"}],
+        ])
+
+        original = {"title": "My Original Post", "description": "Original desc"}
+        result = iterative_optimize(sim, original, client=mock_client, max_iterations=1, num_suggestions=3)
+
+        assert isinstance(result, dict)
+        assert "best" in result
+        assert "all_variants" in result
+        assert "iterations" in result
+        assert "improvement" in result
+        assert "title" in result["best"]
+        assert "description" in result["best"]
+        assert "predicted_score" in result["best"]
+
+    def test_iterative_max_iterations_respected(self, mock_models_and_simulator):
+        from hn_simulator.suggest import iterative_optimize
+        sim = mock_models_and_simulator
+
+        # Provide enough unique suggestions for each iteration with distinct titles
+        # Use very high scores by patching simulate — but easier: provide unique titles per iteration
+        # and force improvement by making simulate return high scores.
+        # Since we can't easily control scores, we just verify iterations <= max_iterations.
+        suggestions_per_call = []
+        for i in range(10):
+            suggestions_per_call.append([
+                {"title": f"Unique Title Iter{i} A", "description": "Desc"},
+                {"title": f"Unique Title Iter{i} B", "description": "Desc"},
+                {"title": f"Unique Title Iter{i} C", "description": "Desc"},
+            ])
+
+        mock_client = self._make_client(suggestions_per_call)
+
+        original = {"title": "Original", "description": "Desc"}
+        max_iter = 3
+        result = iterative_optimize(
+            sim, original, client=mock_client,
+            max_iterations=max_iter, min_improvement=0.0, num_suggestions=3,
+        )
+
+        assert result["iterations"] <= max_iter
+
+    def test_iterative_convergence_stops_early(self, mock_models_and_simulator):
+        from hn_simulator.suggest import iterative_optimize
+        sim = mock_models_and_simulator
+
+        # All calls return the same title — after first iteration it's in seen_titles
+        # so subsequent calls produce no new suggestions → stops early
+        same_suggestions = [
+            {"title": "Same Title Always", "description": "Desc"},
+            {"title": "Same Title Always", "description": "Desc"},
+            {"title": "Same Title Always", "description": "Desc"},
+        ]
+        mock_client = self._make_client([same_suggestions] * 5)
+
+        original = {"title": "Original", "description": "Desc"}
+        result = iterative_optimize(
+            sim, original, client=mock_client,
+            max_iterations=5, min_improvement=0.0, num_suggestions=3,
+        )
+
+        # Should stop after 2 iterations: first sees new title, second finds it already seen
+        assert result["iterations"] < 5
+
+    def test_iterative_tracks_seen_titles(self, mock_models_and_simulator):
+        from hn_simulator.suggest import iterative_optimize
+        sim = mock_models_and_simulator
+
+        mock_client = self._make_client([
+            [{"title": "Title Alpha", "description": "Desc A"},
+             {"title": "Title Beta", "description": "Desc B"},
+             {"title": "Title Gamma", "description": "Desc C"}],
+        ])
+
+        original = {"title": "Original Post", "description": "Desc"}
+        result = iterative_optimize(
+            sim, original, client=mock_client, max_iterations=1, num_suggestions=3,
+        )
+
+        titles = [v["title"] for v in result["all_variants"]]
+        assert len(titles) == len(set(titles)), "Duplicate titles found in all_variants"

@@ -25,6 +25,7 @@ def suggest_variants(
     original: dict,
     client,
     num_suggestions: int = 5,
+    previous_titles: list[str] | None = None,
 ) -> list[dict]:
     """Ask Claude to generate alternative title+description pairs for a post.
 
@@ -32,6 +33,7 @@ def suggest_variants(
         original: Dict with "title" and "description" keys.
         client: Anthropic client (required).
         num_suggestions: Number of variants to generate.
+        previous_titles: Titles already tried — Claude will avoid re-suggesting them.
 
     Returns:
         List of dicts with "title" and "description". Empty list on malformed response.
@@ -48,6 +50,10 @@ def suggest_variants(
         f"{_HN_CULTURE_CONTEXT}\n\n"
         f"Generate {num_suggestions} alternative title+description pairs as a JSON array."
     )
+
+    if previous_titles:
+        joined = ", ".join(f'"{t}"' for t in previous_titles)
+        user_message += f"\n\nDo NOT suggest these titles (already tried): {joined}"
 
     if client is not None:
         # Mock client path (tests) or explicit API client
@@ -123,3 +129,84 @@ def suggest_and_score(
 
     results.sort(key=lambda r: r["predicted_score"], reverse=True)
     return results
+
+
+def iterative_optimize(
+    simulator: "HNSimulator",
+    original: dict,
+    client=None,
+    max_iterations: int = 5,
+    min_improvement: float = 2.0,
+    num_suggestions: int = 3,
+) -> dict:
+    """Iteratively suggest and score variants, converging on the best.
+
+    Returns dict with:
+      - best: {title, description, predicted_score}
+      - all_variants: list of all scored variants
+      - iterations: number of iterations run
+      - improvement: total score improvement from original
+    """
+    orig_result = simulator.simulate(
+        original.get("title", ""),
+        original.get("description", ""),
+        generate_comments=False,
+    )
+    original_score = orig_result.predicted_score
+
+    current_best = {
+        "title": original.get("title", ""),
+        "description": original.get("description", ""),
+        "predicted_score": original_score,
+    }
+
+    seen_titles: set[str] = {current_best["title"]}
+    all_variants: list[dict] = []
+
+    iterations_run = 0
+    for _ in range(max_iterations):
+        iterations_run += 1
+
+        suggestions = suggest_variants(
+            {"title": current_best["title"], "description": current_best["description"]},
+            client=client,
+            num_suggestions=num_suggestions,
+            previous_titles=list(seen_titles),
+        )
+
+        # Filter out already-seen titles
+        new_suggestions = [s for s in suggestions if s.get("title", "") not in seen_titles]
+
+        if not new_suggestions:
+            break
+
+        # Score each new variant
+        iteration_best = None
+        iteration_best_score = current_best["predicted_score"]
+        for s in new_suggestions:
+            t = s.get("title", "")
+            d = s.get("description", "")
+            seen_titles.add(t)
+            sim_result = simulator.simulate(t, d, generate_comments=False)
+            variant = {
+                "title": t,
+                "description": d,
+                "predicted_score": sim_result.predicted_score,
+            }
+            all_variants.append(variant)
+            if sim_result.predicted_score > iteration_best_score:
+                iteration_best_score = sim_result.predicted_score
+                iteration_best = variant
+
+        if iteration_best is not None and (iteration_best_score - current_best["predicted_score"]) >= min_improvement:
+            current_best = iteration_best
+        else:
+            break
+
+    improvement = current_best["predicted_score"] - original_score
+    return {
+        "best": current_best,
+        "all_variants": all_variants,
+        "iterations": iterations_run,
+        "improvement": improvement,
+    }
