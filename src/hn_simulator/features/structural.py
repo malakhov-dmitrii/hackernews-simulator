@@ -1,7 +1,9 @@
 """Structural feature extraction from preprocessed HN stories."""
 from __future__ import annotations
 
+import json
 import re
+from pathlib import Path
 
 import pandas as pd
 
@@ -63,15 +65,84 @@ def extract_text_presence_features(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def extract_structural_features(df: pd.DataFrame) -> pd.DataFrame:
+def compute_domain_stats(
+    df: pd.DataFrame, k: int = 10, global_mean: float = 47.57
+) -> dict:
+    """Compute Bayesian-smoothed average score per domain.
+
+    Formula: smoothed = (n * domain_mean + k * global_mean) / (n + k)
+
+    Args:
+        df: DataFrame with 'domain' and 'score' columns.
+        k: Smoothing factor (default 10).
+        global_mean: Global mean score used as prior (default 47.57).
+
+    Returns:
+        dict mapping domain -> {"avg_score": float, "post_count": int}
+    """
+    if df.empty:
+        return {}
+    grouped = df.groupby("domain")["score"]
+    counts = grouped.count()
+    means = grouped.mean()
+    smoothed = (counts * means + k * global_mean) / (counts + k)
+    result = {}
+    for domain in counts.index:
+        result[domain] = {
+            "avg_score": float(smoothed[domain]),
+            "post_count": int(counts[domain]),
+        }
+    return result
+
+
+def extract_domain_reputation_features(
+    df: pd.DataFrame, domain_stats: dict, global_mean: float = 47.57
+) -> pd.DataFrame:
+    """Extract domain reputation features using precomputed domain stats.
+
+    Returns DataFrame with columns: domain_avg_score, domain_post_count.
+    Unknown or empty domains fall back to global_mean and 0.
+    """
+    result = pd.DataFrame(index=df.index)
+    domain_col = df["domain"].fillna("").astype(str)
+    avg_scores = domain_col.map(
+        lambda d: domain_stats[d]["avg_score"] if d in domain_stats else global_mean
+    ).astype(float)
+    post_counts = domain_col.map(
+        lambda d: domain_stats[d]["post_count"] if d in domain_stats else 0
+    ).astype(int)
+    result["domain_avg_score"] = avg_scores
+    result["domain_post_count"] = post_counts
+    return result
+
+
+def _load_domain_stats_from_disk() -> dict:
+    """Load domain stats from the default processed data location if it exists."""
+    try:
+        from hn_simulator.config import PROCESSED_DIR
+        path = Path(PROCESSED_DIR) / "domain_stats.json"
+        if path.exists():
+            return json.loads(path.read_text())
+    except Exception:
+        pass
+    return {}
+
+
+def extract_structural_features(
+    df: pd.DataFrame, domain_stats: dict | None = None
+) -> pd.DataFrame:
     """Combine all structural feature extractors into a single numeric DataFrame.
 
-    Returns only the computed feature columns (13 total), preserving index.
+    Returns only the computed feature columns (15 total), preserving index.
+    If domain_stats is None, attempts to load from disk; falls back to empty dict.
     """
+    if domain_stats is None:
+        domain_stats = _load_domain_stats_from_disk()
     parts = [
         extract_title_features(df),
         extract_temporal_features(df),
         extract_url_features(df),
         extract_text_presence_features(df),
+        extract_domain_reputation_features(df, domain_stats),
     ]
     return pd.concat(parts, axis=1)

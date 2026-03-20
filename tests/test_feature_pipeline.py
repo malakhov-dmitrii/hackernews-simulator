@@ -27,9 +27,9 @@ class TestFeaturePipeline:
         from hn_simulator.features.pipeline import build_feature_matrix
         df = preprocess_stories(sample_stories_df)
         X, feature_names = build_feature_matrix(df)
-        # 13 structural + 384 embedding = 397
-        assert X.shape[1] == 397
-        assert len(feature_names) == 397
+        # 15 structural + 384 embedding = 399
+        assert X.shape[1] == 399
+        assert len(feature_names) == 399
 
     def test_no_nan_in_output(self, sample_stories_df, mock_embedding_model):
         from hn_simulator.data.preprocess import preprocess_stories
@@ -54,5 +54,5 @@ class TestFeaturePipeline:
         title = "Show HN: My cool project"
         description = "I built this thing using Python and ML."
         X, feature_names = build_feature_matrix_for_input(title, description)
-        assert X.shape == (1, 397)
+        assert X.shape == (1, 399)
         assert not np.isnan(X).any()

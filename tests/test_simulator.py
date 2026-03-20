@@ -16,10 +16,10 @@ def mock_models(tmp_path, mock_embedding_model):
     import pandas as pd
 
     rng = np.random.default_rng(42)
-    X = rng.standard_normal((100, 397)).astype(np.float32)
+    X = rng.standard_normal((100, 399)).astype(np.float32)
     y_score = (X[:, 0] * 10 + rng.standard_normal(100)).clip(0, None)
     y_comments = (X[:, 1] * 5 + rng.standard_normal(100)).clip(0, None)
-    names = [f"feat_{i}" for i in range(397)]
+    names = [f"feat_{i}" for i in range(399)]
 
     score_model, _ = train_score_model(X[:80], y_score[:80], X[80:], y_score[80:], names)
     comment_model, _ = train_comment_count_model(X[:80], y_comments[:80], X[80:], y_comments[80:], names)

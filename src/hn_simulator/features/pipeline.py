@@ -11,8 +11,8 @@ from hn_simulator.features.text import extract_title_embeddings
 def build_feature_matrix(df: pd.DataFrame) -> tuple[np.ndarray, list[str]]:
     """Build feature matrix from a preprocessed stories DataFrame.
 
-    Concatenates structural features (13 cols) and title embeddings (384 dims).
-    Returns (X, feature_names) where X is float32 ndarray of shape (n, 397).
+    Concatenates structural features (15 cols) and title embeddings (384 dims).
+    Returns (X, feature_names) where X is float32 ndarray of shape (n, 399).
     Any NaN values are filled with 0.
     """
     structural_df = extract_structural_features(df)
