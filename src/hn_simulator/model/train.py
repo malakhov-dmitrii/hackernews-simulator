@@ -6,8 +6,9 @@ from pathlib import Path
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
+from sklearn.utils.class_weight import compute_class_weight
 
-from hn_simulator.config import LIGHTGBM_PARAMS
+from hn_simulator.config import LIGHTGBM_PARAMS, LIGHTGBM_MULTICLASS_PARAMS
 
 
 def temporal_split(
@@ -116,6 +117,74 @@ def train_comment_count_model(
     return _train_regression_model(
         X_train, y_train, X_val, y_val, feature_names, LIGHTGBM_PARAMS
     )
+
+
+def train_multiclass_model(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_val: np.ndarray,
+    y_val: np.ndarray,
+    feature_names: list[str],
+) -> tuple[lgb.Booster, dict]:
+    """Train LightGBM multiclass model to predict 5-class reception label.
+
+    Classes: 0=flop, 1=low, 2=moderate, 3=hot, 4=viral.
+    Uses balanced class weights to handle class imbalance.
+
+    Args:
+        X_train: Training feature matrix of shape (n_train, n_features).
+        y_train: Integer class labels 0-4 for training set.
+        X_val: Validation feature matrix of shape (n_val, n_features).
+        y_val: Integer class labels 0-4 for validation set.
+        feature_names: List of feature name strings.
+
+    Returns:
+        (booster, {"val_accuracy": float, "val_logloss": float})
+    """
+    classes = np.unique(y_train)
+    weights = compute_class_weight("balanced", classes=classes, y=y_train)
+    sample_weights = np.array([weights[int(c)] for c in y_train])
+
+    train_dataset = lgb.Dataset(
+        X_train,
+        label=y_train,
+        feature_name=feature_names,
+        weight=sample_weights,
+    )
+    val_dataset = lgb.Dataset(
+        X_val, label=y_val, feature_name=feature_names, reference=train_dataset
+    )
+
+    train_params = {k: v for k, v in LIGHTGBM_MULTICLASS_PARAMS.items()
+                    if k not in ("n_estimators", "early_stopping_rounds")}
+    n_estimators = LIGHTGBM_MULTICLASS_PARAMS.get("n_estimators", 500)
+    early_stopping_rounds = LIGHTGBM_MULTICLASS_PARAMS.get("early_stopping_rounds", 50)
+
+    callbacks = [
+        lgb.early_stopping(stopping_rounds=early_stopping_rounds, verbose=False),
+        lgb.log_evaluation(period=-1),
+    ]
+
+    model = lgb.train(
+        train_params,
+        train_dataset,
+        num_boost_round=n_estimators,
+        valid_sets=[val_dataset],
+        callbacks=callbacks,
+    )
+
+    # Predict probabilities: shape (n_val, 5)
+    probs = model.predict(X_val)
+    preds = np.argmax(probs, axis=1)
+
+    val_accuracy = float(np.mean(preds == y_val))
+
+    # Compute log loss manually for the true classes
+    eps = 1e-15
+    true_probs = probs[np.arange(len(y_val)), y_val.astype(int)].clip(eps, 1 - eps)
+    val_logloss = float(-np.mean(np.log(true_probs)))
+
+    return model, {"val_accuracy": val_accuracy, "val_logloss": val_logloss}
 
 
 def save_model(model: lgb.Booster, path: Path) -> None:

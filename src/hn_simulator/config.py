@@ -37,12 +37,28 @@ LIGHTGBM_PARAMS = {
     "early_stopping_rounds": 50,
 }
 
+# LightGBM multiclass parameters (5-class classification)
+LIGHTGBM_MULTICLASS_PARAMS = {
+    "objective": "multiclass",
+    "num_class": 5,
+    "metric": "multi_logloss",
+    "num_leaves": 63,
+    "learning_rate": 0.05,
+    "feature_fraction": 0.8,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 5,
+    "verbose": -1,
+    "n_estimators": 500,
+    "early_stopping_rounds": 50,
+}
+
 # Score distribution thresholds (calibrated from dataset stats)
 SCORE_THRESHOLDS = {
     "flop": 3,
-    "moderate": 15,
-    "hot": 100,
-    "viral": 300,
+    "low": 15,
+    "moderate": 100,
+    "hot": 300,
+    "viral": 300,  # anything above hot
 }
 
 # RAG settings

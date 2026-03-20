@@ -5,20 +5,25 @@ import numpy as np
 
 from hn_simulator.config import SCORE_THRESHOLDS
 
-# Ordered label sequence for distribution computation
-_LABELS = ("flop", "moderate", "hot", "viral")
+# Ordered label sequence for distribution computation (5-class system)
+_LABELS = ("flop", "low", "moderate", "hot", "viral")
 
 # Threshold boundaries in ascending order
 _BOUNDARIES = (
     SCORE_THRESHOLDS["flop"],      # 3
-    SCORE_THRESHOLDS["moderate"],  # 15
-    SCORE_THRESHOLDS["hot"],       # 100
+    SCORE_THRESHOLDS["low"],       # 15
+    SCORE_THRESHOLDS["moderate"],  # 100
+    SCORE_THRESHOLDS["hot"],       # 300
 )
 
 _DESCRIPTIONS = {
     "flop": (
         "Post received minimal engagement. Score stayed very low, suggesting it "
         "did not resonate with the HN community or was posted at a bad time."
+    ),
+    "low": (
+        "Post received below-average engagement. Attracted only a handful of upvotes "
+        "and limited discussion — typical for posts that did not break through."
     ),
     "moderate": (
         "Post received moderate engagement. Attracted a small but engaged audience "
@@ -34,30 +39,82 @@ _DESCRIPTIONS = {
     ),
 }
 
+# Bucket medians for expected score computation (one per class)
+BUCKET_MEDIANS = np.array([1.0, 7.0, 37.0, 159.0, 441.0])
+
+
+def score_to_class_label(score: float) -> str:
+    """Map a score to a 5-class label.
+
+    Boundaries:
+        score <= 3   -> "flop"
+        score <= 15  -> "low"
+        score <= 100 -> "moderate"
+        score <= 300 -> "hot"
+        score > 300  -> "viral"
+
+    Args:
+        score: Story score (predicted or actual).
+
+    Returns:
+        One of: "flop", "low", "moderate", "hot", "viral".
+    """
+    if score <= _BOUNDARIES[0]:
+        return "flop"
+    if score <= _BOUNDARIES[1]:
+        return "low"
+    if score <= _BOUNDARIES[2]:
+        return "moderate"
+    if score <= _BOUNDARIES[3]:
+        return "hot"
+    return "viral"
+
+
+def score_to_class_index(score: float) -> int:
+    """Map a score to a class index 0-4.
+
+    Returns:
+        0 = flop, 1 = low, 2 = moderate, 3 = hot, 4 = viral.
+    """
+    label = score_to_class_label(score)
+    return _LABELS.index(label)
+
+
+def expected_score_from_probs(
+    probs: np.ndarray, bucket_medians: np.ndarray | None = None
+) -> float:
+    """Compute expected score as dot product of class probabilities and bucket medians.
+
+    Args:
+        probs: Array of shape (5,) with class probabilities summing to 1.
+        bucket_medians: Optional array of shape (5,). Defaults to BUCKET_MEDIANS.
+
+    Returns:
+        Expected score (float).
+    """
+    if bucket_medians is None:
+        bucket_medians = BUCKET_MEDIANS
+    return float(np.dot(probs, bucket_medians))
+
 
 def classify_reception(score: float, comment_count: float) -> str:
     """Classify a story's reception based on score.
 
     Thresholds (from SCORE_THRESHOLDS):
         score <= 3   -> "flop"
-        score <= 15  -> "moderate"
-        score <= 100 -> "hot"
-        score > 100  -> "viral"
+        score <= 15  -> "low"
+        score <= 100 -> "moderate"
+        score <= 300 -> "hot"
+        score > 300  -> "viral"
 
     Args:
         score: Predicted or actual story score.
         comment_count: Predicted or actual comment count (available for future use).
 
     Returns:
-        One of: "flop", "moderate", "hot", "viral".
+        One of: "flop", "low", "moderate", "hot", "viral".
     """
-    if score <= _BOUNDARIES[0]:
-        return "flop"
-    if score <= _BOUNDARIES[1]:
-        return "moderate"
-    if score <= _BOUNDARIES[2]:
-        return "hot"
-    return "viral"
+    return score_to_class_label(score)
 
 
 def classify_reception_with_confidence(
@@ -85,12 +142,13 @@ def classify_reception_with_confidence(
     # bucket centre (in log-score space for numerical stability).
     log_score = np.log1p(max(predicted_score, 0.0))
 
-    # Bucket centres in log-score space
+    # Bucket centres in log-score space (5 classes)
     centres = [
-        np.log1p(1.5),   # flop centre ~1-3
-        np.log1p(9.0),   # moderate centre ~4-15
-        np.log1p(57.5),  # hot centre ~16-100
-        np.log1p(300.0), # viral centre ~101+
+        np.log1p(1.0),    # flop centre ~0-3
+        np.log1p(7.0),    # low centre ~4-15
+        np.log1p(37.0),   # moderate centre ~16-100
+        np.log1p(159.0),  # hot centre ~101-300
+        np.log1p(441.0),  # viral centre ~301+
     ]
 
     # Negative squared distance → softmax gives probability
@@ -111,7 +169,7 @@ def get_reception_description(label: str) -> str:
     """Return a human-readable description of a reception label.
 
     Args:
-        label: One of "flop", "moderate", "hot", "viral".
+        label: One of "flop", "low", "moderate", "hot", "viral".
 
     Returns:
         Multi-sentence description of what the label means in HN context.

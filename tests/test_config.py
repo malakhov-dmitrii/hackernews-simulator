@@ -32,10 +32,11 @@ def test_model_params():
 def test_score_thresholds():
     from hn_simulator.config import SCORE_THRESHOLDS
     assert "flop" in SCORE_THRESHOLDS
+    assert "low" in SCORE_THRESHOLDS
     assert "moderate" in SCORE_THRESHOLDS
     assert "hot" in SCORE_THRESHOLDS
     assert "viral" in SCORE_THRESHOLDS
-    vals = [SCORE_THRESHOLDS[k] for k in ["flop", "moderate", "hot", "viral"]]
+    vals = [SCORE_THRESHOLDS[k] for k in ["flop", "low", "moderate", "hot"]]
     assert vals == sorted(vals)
 
 

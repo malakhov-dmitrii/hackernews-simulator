@@ -1,0 +1,16 @@
+{
+  "active": false,
+  "session_id": "3cd36ae3-6222-47fc-bf9c-f4dbe24157fd.jsonl",
+  "task_description": "HN Simulator v2: 8 improvements",
+  "iteration": 1,
+  "max_iterations": 5,
+  "tdd_enabled": true,
+  "phase": "complete",
+  "pipeline_actor": "critic",
+  "critic_verdict": "APPROVED",
+  "scores_history": [{"iteration": 1, "score": 22, "breakdown": {"completeness": 5, "correctness": 5, "tdd_quality": 4, "executability": 4, "risk_management": 4}}],
+  "flags": [],
+  "started_at": "2026-03-20T10:00:00Z",
+  "updated_at": "2026-03-20T11:00:00Z",
+  "transcript_path": "/Users/malakhov/.claude/projects/-Users-malakhov-code/3cd36ae3-6222-47fc-bf9c-f4dbe24157fd.jsonl"
+}

@@ -77,7 +77,7 @@ class TestSimulator:
         result = sim.simulate("Show HN: Test Project", "A test project description")
         assert result.predicted_score >= 0
         assert result.predicted_comments >= 0
-        assert result.reception_label in ("flop", "moderate", "hot", "viral")
+        assert result.reception_label in ("flop", "low", "moderate", "hot", "viral")
         assert isinstance(result.simulated_comments, list)
         assert isinstance(result.similar_stories, list)
 

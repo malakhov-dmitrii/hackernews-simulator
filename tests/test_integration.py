@@ -82,7 +82,7 @@ class TestEndToEnd:
         # Verify all result fields
         assert result.predicted_score >= 0
         assert result.predicted_comments >= 0
-        assert result.reception_label in ("flop", "moderate", "hot", "viral")
+        assert result.reception_label in ("flop", "low", "moderate", "hot", "viral")
         assert 0 < result.confidence <= 1.0
         assert sum(result.label_distribution.values()) == pytest.approx(1.0, abs=0.01)
         assert len(result.simulated_comments) == 2
