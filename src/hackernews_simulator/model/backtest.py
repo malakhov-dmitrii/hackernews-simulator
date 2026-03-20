@@ -6,8 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from scipy.stats import spearmanr
 
-from hn_simulator.model.labels import score_to_class_index, BUCKET_MEDIANS
-from hn_simulator.model.train import train_multiclass_model
+from hackernews_simulator.model.labels import score_to_class_index, BUCKET_MEDIANS
+from hackernews_simulator.model.train import train_multiclass_model
 
 _LABELS = ("flop", "low", "moderate", "hot", "viral")
 

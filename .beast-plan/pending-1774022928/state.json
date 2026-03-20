@@ -1,0 +1,15 @@
+{
+  "active": true,
+  "session_id": "pending-1774022928",
+  "task_description": "Polish hn-simulator into hackernews-simulator OSS tool for Show HN launch",
+  "iteration": 1,
+  "max_iterations": 5,
+  "tdd_enabled": true,
+  "phase": "interview",
+  "pipeline_actor": "",
+  "critic_verdict": "",
+  "scores_history": [],
+  "flags": [],
+  "started_at": "2026-03-20T12:00:00Z",
+  "updated_at": "2026-03-20T12:00:00Z"
+}

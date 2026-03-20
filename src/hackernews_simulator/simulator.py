@@ -6,12 +6,12 @@ from pathlib import Path
 
 import numpy as np
 
-from hn_simulator.features.pipeline import build_feature_matrix_for_input
-from hn_simulator.features.text import embed_texts
-from hn_simulator.model.labels import classify_reception_with_confidence, expected_score_from_probs
-from hn_simulator.model.predict import predict_score
-from hn_simulator.model.train import load_model
-from hn_simulator.rag.retrieve import retrieve_comments_for_story, retrieve_similar_stories
+from hackernews_simulator.features.pipeline import build_feature_matrix_for_input
+from hackernews_simulator.features.text import embed_texts
+from hackernews_simulator.model.labels import classify_reception_with_confidence, expected_score_from_probs
+from hackernews_simulator.model.predict import predict_score
+from hackernews_simulator.model.train import load_model
+from hackernews_simulator.rag.retrieve import retrieve_comments_for_story, retrieve_similar_stories
 
 
 @dataclass
@@ -76,7 +76,7 @@ class HNSimulator:
         self.sorted_scores: np.ndarray | None = None
         if sorted_scores_path is not None:
             try:
-                from hn_simulator.model.calibrate import load_sorted_scores
+                from hackernews_simulator.model.calibrate import load_sorted_scores
                 self.sorted_scores = load_sorted_scores(Path(sorted_scores_path))
             except (FileNotFoundError, Exception):
                 pass
@@ -84,7 +84,7 @@ class HNSimulator:
         self.time_stats: tuple | None = None
         if time_stats_path is not None:
             try:
-                from hn_simulator.model.calibrate import load_time_stats
+                from hackernews_simulator.model.calibrate import load_time_stats
                 self.time_stats = load_time_stats(Path(time_stats_path))
             except (FileNotFoundError, Exception):
                 pass
@@ -133,7 +133,7 @@ class HNSimulator:
         # client=None triggers Claude CLI fallback in generate_comments()
         simulated_comments: list[dict] = []
         if generate_comments:
-            from hn_simulator.comments.generate import generate_comments as _generate_comments
+            from hackernews_simulator.comments.generate import generate_comments as _generate_comments
 
             simulated_comments = _generate_comments(
                 title=title,
@@ -158,12 +158,12 @@ class HNSimulator:
 
         # Percentile calibration
         if self.sorted_scores is not None:
-            from hn_simulator.model.calibrate import score_to_percentile
+            from hackernews_simulator.model.calibrate import score_to_percentile
             percentile = score_to_percentile(predicted_score, self.sorted_scores)
 
         # SHAP explanation — use whichever model is available
         try:
-            from hn_simulator.model.explain import explain_prediction
+            from hackernews_simulator.model.explain import explain_prediction
             explain_model = self.multiclass_model if self.multiclass_model is not None else self.score_model
             _, feature_names = build_feature_matrix_for_input("", "")
             shap_features = explain_prediction(
@@ -174,7 +174,7 @@ class HNSimulator:
 
         # Time recommendation
         if self.time_stats is not None:
-            from hn_simulator.model.calibrate import recommend_posting_time
+            from hackernews_simulator.model.calibrate import recommend_posting_time
             hourly, daily = self.time_stats
             rec = recommend_posting_time(hourly, daily)
             time_recommendation = (

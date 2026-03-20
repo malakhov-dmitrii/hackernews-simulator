@@ -119,7 +119,7 @@ def extract_domain_reputation_features(
 def _load_domain_stats_from_disk() -> dict:
     """Load domain stats from the default processed data location if it exists."""
     try:
-        from hn_simulator.config import PROCESSED_DIR
+        from hackernews_simulator.config import PROCESSED_DIR
         path = Path(PROCESSED_DIR) / "domain_stats.json"
         if path.exists():
             return json.loads(path.read_text())

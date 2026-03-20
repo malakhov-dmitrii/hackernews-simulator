@@ -121,6 +121,6 @@ def mock_embedding_model():
     mock_model.encode = deterministic_encode
     mock_model.get_sentence_embedding_dimension.return_value = 384
 
-    with patch("hn_simulator.features.text.SentenceTransformer", return_value=mock_model):
-        with patch("hn_simulator.features.text._model", None):
+    with patch("hackernews_simulator.features.text.SentenceTransformer", return_value=mock_model):
+        with patch("hackernews_simulator.features.text._model", None):
             yield mock_model

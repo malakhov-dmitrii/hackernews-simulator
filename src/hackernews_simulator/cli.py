@@ -7,8 +7,8 @@ import sys
 import click
 import numpy as np
 
-from hn_simulator.config import LANCEDB_DIR, MODELS_DIR, RAW_DIR, ensure_dirs
-from hn_simulator.simulator import HNSimulator
+from hackernews_simulator.config import LANCEDB_DIR, MODELS_DIR, RAW_DIR, ensure_dirs
+from hackernews_simulator.simulator import HNSimulator
 
 
 def _bar(fraction: float, width: int = 20) -> str:
@@ -86,7 +86,7 @@ def main() -> None:
 @click.option("--json", "output_json", is_flag=True, default=False, help="Output JSON instead of human-readable text")
 def predict(title: str, description: str, skip_comments: bool, output_json: bool) -> None:
     """Predict HN community reaction for a story."""
-    from hn_simulator.config import PROCESSED_DIR
+    from hackernews_simulator.config import PROCESSED_DIR
     score_model_path = MODELS_DIR / "score_model.txt"
     comment_model_path = MODELS_DIR / "comment_model.txt"
     multiclass_path = MODELS_DIR / "multiclass_model.txt"
@@ -127,27 +127,27 @@ def train(sample_size: int, min_score: int) -> None:
     click.echo(f"Starting training pipeline (sample_size={sample_size}, min_score={min_score})...")
 
     click.echo("Step 1/4: Fetching data...")
-    from hn_simulator.data.fetch import fetch_stories_stratified
+    from hackernews_simulator.data.fetch import fetch_stories_stratified
     df = fetch_stories_stratified(total_limit=sample_size)
     stories_path = RAW_DIR / "stories.parquet"
     df.to_parquet(stories_path)
     click.echo(f"  Fetched {len(df)} stories -> {stories_path}")
 
     click.echo("Step 2/4: Preprocessing...")
-    from hn_simulator.data.preprocess import preprocess_stories
+    from hackernews_simulator.data.preprocess import preprocess_stories
     df = preprocess_stories(df)
     click.echo(f"  Preprocessed {len(df)} stories")
 
     click.echo("Step 3/4: Building feature matrix...")
-    from hn_simulator.features.pipeline import build_feature_matrix
-    from hn_simulator.config import PROCESSED_DIR
+    from hackernews_simulator.features.pipeline import build_feature_matrix
+    from hackernews_simulator.config import PROCESSED_DIR
     import numpy as np
     X, feature_names = build_feature_matrix(df)
     np.save(PROCESSED_DIR / "features.npy", X)
     click.echo(f"  Features shape: {X.shape}")
 
     click.echo("Step 4/4: Training models...")
-    from hn_simulator.model.train import train_model, save_model
+    from hackernews_simulator.model.train import train_model, save_model
     score_labels = df["score"].values
     comment_labels = df["descendants"].fillna(0).values
     score_model = train_model(X, score_labels)
@@ -169,7 +169,7 @@ def fetch(sample_size: int, output_dir: str | None) -> None:
     out = Path(output_dir) if output_dir else RAW_DIR
 
     click.echo(f"Fetching {sample_size} stories from open-index/hacker-news...")
-    from hn_simulator.data.fetch import fetch_stories_stratified
+    from hackernews_simulator.data.fetch import fetch_stories_stratified
     df = fetch_stories_stratified(total_limit=sample_size)
     path = out / "stories.parquet"
     df.to_parquet(path)
@@ -180,7 +180,7 @@ def fetch(sample_size: int, output_dir: str | None) -> None:
 @click.option("--features-dir", default=None, help="Directory with processed features (default: PROCESSED_DIR)")
 def backtest(features_dir: str | None) -> None:
     """Run backtest on stored feature data and print report."""
-    from hn_simulator.config import PROCESSED_DIR
+    from hackernews_simulator.config import PROCESSED_DIR
     import json as _json
     from pathlib import Path as _Path
 
@@ -200,7 +200,7 @@ def backtest(features_dir: str | None) -> None:
         feature_names = _json.load(f)
 
     click.echo(f"Running backtest on {len(X)} samples...")
-    from hn_simulator.model.backtest import run_backtest, format_backtest_report
+    from hackernews_simulator.model.backtest import run_backtest, format_backtest_report
     results = run_backtest(X, y, feature_names)
     click.echo(format_backtest_report(results))
 
@@ -227,7 +227,7 @@ def suggest_loop(title: str, description: str, max_iterations: int) -> None:
     click.echo(f"Optimizing: {title!r}")
     click.echo(f"Running up to {max_iterations} iteration(s)...")
 
-    from hn_simulator.suggest import iterative_optimize
+    from hackernews_simulator.suggest import iterative_optimize
     result = iterative_optimize(
         simulator=simulator,
         original={"title": title, "description": description},
@@ -264,7 +264,7 @@ def build_index(sample_size: int) -> None:
 
     click.echo(f"Building LanceDB index (sample_size={sample_size})...")
     import pandas as pd
-    from hn_simulator.rag.index import build_index as _build_index
+    from hackernews_simulator.rag.index import build_index as _build_index
     df = pd.read_parquet(stories_path)
     if len(df) > sample_size:
         df = df.sample(n=sample_size, random_state=42)

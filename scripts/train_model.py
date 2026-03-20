@@ -5,8 +5,8 @@ import click
 import numpy as np
 import pandas as pd
 
-from hn_simulator.config import MODELS_DIR, PROCESSED_DIR, TRAIN_CUTOFF_DATE, ensure_dirs
-from hn_simulator.model.train import save_model, train_comment_count_model, train_score_model
+from hackernews_simulator.config import MODELS_DIR, PROCESSED_DIR, TRAIN_CUTOFF_DATE, ensure_dirs
+from hackernews_simulator.model.train import save_model, train_comment_count_model, train_score_model
 
 
 @click.command()
@@ -32,9 +32,9 @@ def main(features_dir, models_dir, cutoff):
     # We use a simple index-based split as a fallback when no time metadata exists
     # If stories.parquet exists alongside features, use temporal split properly
     from pathlib import Path
-    from hn_simulator.config import RAW_DIR
-    from hn_simulator.data.preprocess import preprocess_stories
-    from hn_simulator.model.train import temporal_split
+    from hackernews_simulator.config import RAW_DIR
+    from hackernews_simulator.data.preprocess import preprocess_stories
+    from hackernews_simulator.model.train import temporal_split
 
     raw_path = RAW_DIR / "stories.parquet"
     if raw_path.exists():
@@ -99,8 +99,8 @@ def main(features_dir, models_dir, cutoff):
 
     # Train multiclass model
     click.echo("Training multiclass model...")
-    from hn_simulator.model.train import train_multiclass_model
-    from hn_simulator.model.labels import score_to_class_index
+    from hackernews_simulator.model.train import train_multiclass_model
+    from hackernews_simulator.model.labels import score_to_class_index
     y_class_train = np.array([score_to_class_index(s) for s in y_score_train], dtype=np.int32)
     y_class_val = np.array([score_to_class_index(s) for s in y_score_val], dtype=np.int32)
     multiclass_model, mc_metrics = train_multiclass_model(
@@ -113,21 +113,21 @@ def main(features_dir, models_dir, cutoff):
 
     # Compute and save sorted_scores.npy for percentile calibration
     click.echo("Computing sorted scores for percentile calibration...")
-    from hn_simulator.model.calibrate import build_sorted_scores, save_sorted_scores
+    from hackernews_simulator.model.calibrate import build_sorted_scores, save_sorted_scores
     sorted_scores = build_sorted_scores(y_score)
     sorted_scores_path = _Path(src) / "sorted_scores.npy"
     save_sorted_scores(sorted_scores, sorted_scores_path)
     click.echo(f"Saved sorted scores -> {sorted_scores_path}")
 
     # Compute and save time_stats.json if raw stories exist
-    from hn_simulator.config import RAW_DIR as _RAW_DIR
+    from hackernews_simulator.config import RAW_DIR as _RAW_DIR
     raw_path = _RAW_DIR / "stories.parquet"
     if raw_path.exists():
         click.echo("Computing time stats...")
         import pandas as _pd
-        from hn_simulator.model.calibrate import compute_time_stats, save_time_stats
+        from hackernews_simulator.model.calibrate import compute_time_stats, save_time_stats
         df_raw = _pd.read_parquet(raw_path)
-        from hn_simulator.data.preprocess import preprocess_stories as _preprocess
+        from hackernews_simulator.data.preprocess import preprocess_stories as _preprocess
         df_raw = _preprocess(df_raw)
         hourly, daily = compute_time_stats(df_raw)
         time_stats_path = _Path(src) / "time_stats.json"

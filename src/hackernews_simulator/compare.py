@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 import yaml
 
 if TYPE_CHECKING:
-    from hn_simulator.simulator import HNSimulator
+    from hackernews_simulator.simulator import HNSimulator
 
-from hn_simulator.simulator import SimulationResult
+from hackernews_simulator.simulator import SimulationResult
 
 
 @dataclass
@@ -113,7 +113,7 @@ def generate_comparison_explanation(ranked: list[dict], client=None) -> str:
         return response.content[0].text
     except Exception:
         # Fallback to Claude CLI if client call fails
-        from hn_simulator.claude_runner import run_claude
+        from hackernews_simulator.claude_runner import run_claude
         return run_claude(prompt=prompt, timeout_seconds=60)
 
 

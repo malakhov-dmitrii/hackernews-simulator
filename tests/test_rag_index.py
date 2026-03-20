@@ -11,7 +11,7 @@ from pathlib import Path
 @pytest.fixture
 def stories_with_embeddings(sample_stories_df):
     """Stories DataFrame with pre-computed embeddings (fixed seed)."""
-    from hn_simulator.data.preprocess import preprocess_stories
+    from hackernews_simulator.data.preprocess import preprocess_stories
     rng = np.random.default_rng(42)
     df = preprocess_stories(sample_stories_df)
     n = len(df)
@@ -21,7 +21,7 @@ def stories_with_embeddings(sample_stories_df):
 
 class TestBuildStoryIndex:
     def test_creates_lance_table(self, stories_with_embeddings, tmp_path):
-        from hn_simulator.rag.index import build_story_index
+        from hackernews_simulator.rag.index import build_story_index
         df, embeddings = stories_with_embeddings
         db_path = tmp_path / "lancedb"
         build_story_index(df, embeddings, db_path=db_path)
@@ -30,7 +30,7 @@ class TestBuildStoryIndex:
         assert "stories" in db.table_names()
 
     def test_table_has_correct_schema(self, stories_with_embeddings, tmp_path):
-        from hn_simulator.rag.index import build_story_index
+        from hackernews_simulator.rag.index import build_story_index
         df, embeddings = stories_with_embeddings
         db_path = tmp_path / "lancedb"
         build_story_index(df, embeddings, db_path=db_path)
@@ -44,7 +44,7 @@ class TestBuildStoryIndex:
         assert "id" in schema_names  # open-index column
 
     def test_table_has_correct_row_count(self, stories_with_embeddings, tmp_path):
-        from hn_simulator.rag.index import build_story_index
+        from hackernews_simulator.rag.index import build_story_index
         df, embeddings = stories_with_embeddings
         db_path = tmp_path / "lancedb"
         build_story_index(df, embeddings, db_path=db_path)
@@ -56,8 +56,8 @@ class TestBuildStoryIndex:
 
 class TestBuildCommentIndex:
     def test_creates_comment_table(self, sample_comments_df, tmp_path):
-        from hn_simulator.rag.index import build_comment_index
-        from hn_simulator.data.preprocess import preprocess_comments
+        from hackernews_simulator.rag.index import build_comment_index
+        from hackernews_simulator.data.preprocess import preprocess_comments
         comments = preprocess_comments(sample_comments_df)
         db_path = tmp_path / "lancedb"
         build_comment_index(comments, db_path=db_path)
@@ -66,8 +66,8 @@ class TestBuildCommentIndex:
         assert "comments" in db.table_names()
 
     def test_comment_table_has_parent_column(self, sample_comments_df, tmp_path):
-        from hn_simulator.rag.index import build_comment_index
-        from hn_simulator.data.preprocess import preprocess_comments
+        from hackernews_simulator.rag.index import build_comment_index
+        from hackernews_simulator.data.preprocess import preprocess_comments
         comments = preprocess_comments(sample_comments_df)
         db_path = tmp_path / "lancedb"
         build_comment_index(comments, db_path=db_path)

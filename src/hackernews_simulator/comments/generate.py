@@ -3,8 +3,8 @@ import json
 import logging
 import re
 
-from hn_simulator.config import CLAUDE_MODEL
-from hn_simulator.comments.prompts import build_system_prompt, build_user_prompt
+from hackernews_simulator.config import CLAUDE_MODEL
+from hackernews_simulator.comments.prompts import build_system_prompt, build_user_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ def generate_comments(
             text = response.content[0].text
         else:
             # Headless Claude CLI — no API key needed
-            from hn_simulator.claude_runner import run_claude
+            from hackernews_simulator.claude_runner import run_claude
             text = run_claude(
                 prompt=user_prompt,
                 system_prompt=system_prompt,

@@ -25,7 +25,7 @@ def domain_stats_file(tmp_path, domain_stats):
 
 class TestComputeDomainStats:
     def test_computes_bayesian_smoothed_avg(self):
-        from hn_simulator.features.structural import compute_domain_stats
+        from hackernews_simulator.features.structural import compute_domain_stats
         df = pd.DataFrame({
             "domain": ["github.com", "github.com", "github.com", "blog.com"],
             "score": np.array([100, 200, 300, 10], dtype=np.int32),
@@ -39,7 +39,7 @@ class TestComputeDomainStats:
         assert stats["blog.com"]["post_count"] == 1
 
     def test_empty_dataframe_returns_empty_dict(self):
-        from hn_simulator.features.structural import compute_domain_stats
+        from hackernews_simulator.features.structural import compute_domain_stats
         df = pd.DataFrame({"domain": pd.Series(dtype=str), "score": pd.Series(dtype=np.int32)})
         stats = compute_domain_stats(df, k=10, global_mean=50.0)
         assert stats == {}
@@ -47,21 +47,21 @@ class TestComputeDomainStats:
 
 class TestExtractDomainReputationFeatures:
     def test_known_domain_gets_stats(self, domain_stats):
-        from hn_simulator.features.structural import extract_domain_reputation_features
+        from hackernews_simulator.features.structural import extract_domain_reputation_features
         df = pd.DataFrame({"domain": ["github.com"]})
         result = extract_domain_reputation_features(df, domain_stats, global_mean=47.57)
         assert result["domain_avg_score"].iloc[0] == pytest.approx(120.5)
         assert result["domain_post_count"].iloc[0] == 5000
 
     def test_unknown_domain_gets_global_mean(self, domain_stats):
-        from hn_simulator.features.structural import extract_domain_reputation_features
+        from hackernews_simulator.features.structural import extract_domain_reputation_features
         df = pd.DataFrame({"domain": ["unknown.org"]})
         result = extract_domain_reputation_features(df, domain_stats, global_mean=47.57)
         assert result["domain_avg_score"].iloc[0] == pytest.approx(47.57)
         assert result["domain_post_count"].iloc[0] == 0
 
     def test_empty_domain_gets_global_mean(self, domain_stats):
-        from hn_simulator.features.structural import extract_domain_reputation_features
+        from hackernews_simulator.features.structural import extract_domain_reputation_features
         df = pd.DataFrame({"domain": [""]})
         result = extract_domain_reputation_features(df, domain_stats, global_mean=47.57)
         assert result["domain_avg_score"].iloc[0] == pytest.approx(47.57)
@@ -70,8 +70,8 @@ class TestExtractDomainReputationFeatures:
 
 class TestStructuralFeaturesIncludesDomain:
     def test_extract_structural_features_has_15_columns(self, sample_stories_df):
-        from hn_simulator.data.preprocess import preprocess_stories
-        from hn_simulator.features.structural import extract_structural_features
+        from hackernews_simulator.data.preprocess import preprocess_stories
+        from hackernews_simulator.features.structural import extract_structural_features
         df = preprocess_stories(sample_stories_df)
         result = extract_structural_features(df)
         assert "domain_avg_score" in result.columns

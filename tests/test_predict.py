@@ -19,7 +19,7 @@ def synthetic_training_data():
 @pytest.fixture
 def trained_model(synthetic_training_data):
     """Train a quick model for prediction tests."""
-    from hn_simulator.model.train import train_score_model
+    from hackernews_simulator.model.train import train_score_model
     X, y, names = synthetic_training_data
     model, _ = train_score_model(X[:400], y[:400], X[400:], y[400:], names)
     return model
@@ -27,7 +27,7 @@ def trained_model(synthetic_training_data):
 
 class TestPredict:
     def test_predict_score_returns_float(self, trained_model):
-        from hn_simulator.model.predict import predict_score
+        from hackernews_simulator.model.predict import predict_score
         rng = np.random.default_rng(99)
         X = rng.standard_normal((1, 20)).astype(np.float32)
         score = predict_score(trained_model, X)
@@ -35,7 +35,7 @@ class TestPredict:
         assert score >= 0  # scores can't be negative
 
     def test_predict_score_batch(self, trained_model):
-        from hn_simulator.model.predict import predict_score
+        from hackernews_simulator.model.predict import predict_score
         rng = np.random.default_rng(99)
         X = rng.standard_normal((5, 20)).astype(np.float32)
         scores = predict_score(trained_model, X, batch=True)
@@ -43,7 +43,7 @@ class TestPredict:
         assert all(s >= 0 for s in scores)
 
     def test_predict_clamps_negative(self, trained_model):
-        from hn_simulator.model.predict import predict_score
+        from hackernews_simulator.model.predict import predict_score
         # Extreme negative features might produce negative raw prediction
         X = np.full((1, 20), -100.0, dtype=np.float32)
         score = predict_score(trained_model, X)
@@ -52,7 +52,7 @@ class TestPredict:
 
 class TestPredictionResult:
     def test_prediction_result_dataclass(self):
-        from hn_simulator.model.predict import PredictionResult
+        from hackernews_simulator.model.predict import PredictionResult
         result = PredictionResult(
             predicted_score=42.5,
             predicted_comments=15.3,

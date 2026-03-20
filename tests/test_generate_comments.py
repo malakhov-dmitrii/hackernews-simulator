@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 
 class TestGenerateComments:
     def test_returns_list_of_comments(self):
-        from hn_simulator.comments.generate import generate_comments
+        from hackernews_simulator.comments.generate import generate_comments
         mock_response = MagicMock()
         mock_response.content = [MagicMock(text="""[
             {"username": "skeptic_dev", "comment": "Have you considered the scaling implications?", "tone": "skeptical"},
@@ -33,7 +33,7 @@ class TestGenerateComments:
         assert "comment" in comments[0]
 
     def test_handles_malformed_api_response(self):
-        from hn_simulator.comments.generate import generate_comments
+        from hackernews_simulator.comments.generate import generate_comments
         mock_response = MagicMock()
         mock_response.content = [MagicMock(text="This is not valid JSON")]
 
@@ -53,8 +53,8 @@ class TestGenerateComments:
         assert comments == []
 
     def test_calls_claude_with_correct_model(self):
-        from hn_simulator.comments.generate import generate_comments
-        from hn_simulator.config import CLAUDE_MODEL
+        from hackernews_simulator.comments.generate import generate_comments
+        from hackernews_simulator.config import CLAUDE_MODEL
         mock_response = MagicMock()
         mock_response.content = [MagicMock(text="[]")]
         mock_client = MagicMock()
@@ -71,7 +71,7 @@ class TestGenerateComments:
 
     def test_handles_api_exception(self):
         """Error path: Claude API raises an exception."""
-        from hn_simulator.comments.generate import generate_comments
+        from hackernews_simulator.comments.generate import generate_comments
         mock_client = MagicMock()
         mock_client.messages.create.side_effect = Exception("API rate limited")
 
@@ -88,24 +88,24 @@ class TestGenerateComments:
 
 class TestParseComments:
     def test_parse_valid_json(self):
-        from hn_simulator.comments.generate import parse_comments_response
+        from hackernews_simulator.comments.generate import parse_comments_response
         text = '[{"username": "user1", "comment": "Great!", "tone": "positive"}]'
         result = parse_comments_response(text)
         assert len(result) == 1
 
     def test_parse_json_in_markdown_block(self):
-        from hn_simulator.comments.generate import parse_comments_response
+        from hackernews_simulator.comments.generate import parse_comments_response
         text = '```json\n[{"username": "user1", "comment": "Great!", "tone": "positive"}]\n```'
         result = parse_comments_response(text)
         assert len(result) == 1
 
     def test_parse_invalid_returns_empty(self):
-        from hn_simulator.comments.generate import parse_comments_response
+        from hackernews_simulator.comments.generate import parse_comments_response
         result = parse_comments_response("not json at all")
         assert result == []
 
     def test_parse_missing_keys_filters_invalid(self):
-        from hn_simulator.comments.generate import parse_comments_response
+        from hackernews_simulator.comments.generate import parse_comments_response
         text = '[{"username": "user1"}, {"username": "user2", "comment": "Valid"}]'
         result = parse_comments_response(text)
         # Only the item with both username and comment should remain

@@ -5,10 +5,10 @@ import click
 import numpy as np
 import pandas as pd
 
-from hn_simulator.config import PROCESSED_DIR, RAW_DIR, ensure_dirs
-from hn_simulator.data.preprocess import preprocess_stories
-from hn_simulator.features.pipeline import build_feature_matrix
-from hn_simulator.features.text import extract_title_embeddings
+from hackernews_simulator.config import PROCESSED_DIR, RAW_DIR, ensure_dirs
+from hackernews_simulator.data.preprocess import preprocess_stories
+from hackernews_simulator.features.pipeline import build_feature_matrix
+from hackernews_simulator.features.text import extract_title_embeddings
 
 
 @click.command()

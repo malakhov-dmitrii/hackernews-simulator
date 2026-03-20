@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from hn_simulator.config import SCORE_THRESHOLDS
+from hackernews_simulator.config import SCORE_THRESHOLDS
 
 # Ordered label sequence for distribution computation (5-class system)
 _LABELS = ("flop", "low", "moderate", "hot", "viral")

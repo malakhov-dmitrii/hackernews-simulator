@@ -8,23 +8,23 @@ import pandas as pd
 
 class TestFeaturePipeline:
     def test_returns_numpy_array_and_names(self, sample_stories_df, mock_embedding_model):
-        from hn_simulator.data.preprocess import preprocess_stories
-        from hn_simulator.features.pipeline import build_feature_matrix
+        from hackernews_simulator.data.preprocess import preprocess_stories
+        from hackernews_simulator.features.pipeline import build_feature_matrix
         df = preprocess_stories(sample_stories_df)
         X, feature_names = build_feature_matrix(df)
         assert isinstance(X, np.ndarray)
         assert isinstance(feature_names, list)
 
     def test_correct_num_rows(self, sample_stories_df, mock_embedding_model):
-        from hn_simulator.data.preprocess import preprocess_stories
-        from hn_simulator.features.pipeline import build_feature_matrix
+        from hackernews_simulator.data.preprocess import preprocess_stories
+        from hackernews_simulator.features.pipeline import build_feature_matrix
         df = preprocess_stories(sample_stories_df)
         X, _ = build_feature_matrix(df)
         assert X.shape[0] == len(df)
 
     def test_feature_count_structural_plus_embedding(self, sample_stories_df, mock_embedding_model):
-        from hn_simulator.data.preprocess import preprocess_stories
-        from hn_simulator.features.pipeline import build_feature_matrix
+        from hackernews_simulator.data.preprocess import preprocess_stories
+        from hackernews_simulator.features.pipeline import build_feature_matrix
         df = preprocess_stories(sample_stories_df)
         X, feature_names = build_feature_matrix(df)
         # 15 structural + 384 embedding = 399
@@ -32,15 +32,15 @@ class TestFeaturePipeline:
         assert len(feature_names) == 399
 
     def test_no_nan_in_output(self, sample_stories_df, mock_embedding_model):
-        from hn_simulator.data.preprocess import preprocess_stories
-        from hn_simulator.features.pipeline import build_feature_matrix
+        from hackernews_simulator.data.preprocess import preprocess_stories
+        from hackernews_simulator.features.pipeline import build_feature_matrix
         df = preprocess_stories(sample_stories_df)
         X, _ = build_feature_matrix(df)
         assert not np.isnan(X).any()
 
     def test_feature_names_format(self, sample_stories_df, mock_embedding_model):
-        from hn_simulator.data.preprocess import preprocess_stories
-        from hn_simulator.features.pipeline import build_feature_matrix
+        from hackernews_simulator.data.preprocess import preprocess_stories
+        from hackernews_simulator.features.pipeline import build_feature_matrix
         df = preprocess_stories(sample_stories_df)
         _, names = build_feature_matrix(df)
         assert all(isinstance(n, str) for n in names)
@@ -50,7 +50,7 @@ class TestFeaturePipeline:
 
     def test_build_for_single_input(self, mock_embedding_model):
         """Test building features for a single prediction input (no score column)."""
-        from hn_simulator.features.pipeline import build_feature_matrix_for_input
+        from hackernews_simulator.features.pipeline import build_feature_matrix_for_input
         title = "Show HN: My cool project"
         description = "I built this thing using Python and ML."
         X, feature_names = build_feature_matrix_for_input(title, description)

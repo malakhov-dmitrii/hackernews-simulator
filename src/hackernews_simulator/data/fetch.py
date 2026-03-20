@@ -7,7 +7,7 @@ from typing import Generator
 import duckdb
 import pandas as pd
 
-from hn_simulator.config import HF_DATASET_URL, HF_DATASET_YEARS
+from hackernews_simulator.config import HF_DATASET_URL, HF_DATASET_YEARS
 
 
 def build_stories_query(

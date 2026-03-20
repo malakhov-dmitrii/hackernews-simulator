@@ -21,28 +21,28 @@ def trained_model_and_data():
 
 class TestExplainPrediction:
     def test_returns_list(self, trained_model_and_data):
-        from hn_simulator.model.explain import explain_prediction
+        from hackernews_simulator.model.explain import explain_prediction
         model, X, names = trained_model_and_data
         result = explain_prediction(model, X, names, top_k=5)
         assert isinstance(result, list)
         assert len(result) == 5
 
     def test_sorted_by_importance(self, trained_model_and_data):
-        from hn_simulator.model.explain import explain_prediction
+        from hackernews_simulator.model.explain import explain_prediction
         model, X, names = trained_model_and_data
         result = explain_prediction(model, X, names, top_k=5)
         importances = [abs(r["importance"]) for r in result]
         assert importances == sorted(importances, reverse=True)
 
     def test_has_direction(self, trained_model_and_data):
-        from hn_simulator.model.explain import explain_prediction
+        from hackernews_simulator.model.explain import explain_prediction
         model, X, names = trained_model_and_data
         result = explain_prediction(model, X, names, top_k=3)
         for r in result:
             assert r["direction"] in ("up", "down")
 
     def test_structural_only_filter(self, trained_model_and_data):
-        from hn_simulator.model.explain import explain_prediction
+        from hackernews_simulator.model.explain import explain_prediction
         model, X, names = trained_model_and_data
         structural = [f"struct_{i}" for i in range(5)]
         result = explain_prediction(model, X, names, structural_names=structural, top_k=5)
@@ -50,7 +50,7 @@ class TestExplainPrediction:
             assert r["feature"] in structural
 
     def test_returns_fewer_if_not_enough(self, trained_model_and_data):
-        from hn_simulator.model.explain import explain_prediction
+        from hackernews_simulator.model.explain import explain_prediction
         model, X, names = trained_model_and_data
         structural = [f"struct_{i}" for i in range(2)]
         result = explain_prediction(model, X, names, structural_names=structural, top_k=5)
@@ -59,7 +59,7 @@ class TestExplainPrediction:
 
 class TestFormatExplanation:
     def test_format_string(self):
-        from hn_simulator.model.explain import format_explanation
+        from hackernews_simulator.model.explain import format_explanation
         features = [
             {"feature": "is_show_hn", "importance": 2.3, "direction": "up"},
             {"feature": "title_length", "importance": -0.9, "direction": "down"},
@@ -69,5 +69,5 @@ class TestFormatExplanation:
         assert "title_length" in text
 
     def test_empty_list(self):
-        from hn_simulator.model.explain import format_explanation
+        from hackernews_simulator.model.explain import format_explanation
         assert format_explanation([]) == ""

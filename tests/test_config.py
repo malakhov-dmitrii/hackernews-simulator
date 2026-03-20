@@ -4,12 +4,12 @@ from pathlib import Path
 
 
 def test_project_root_exists():
-    from hn_simulator.config import PROJECT_ROOT
+    from hackernews_simulator.config import PROJECT_ROOT
     assert isinstance(PROJECT_ROOT, Path)
 
 
 def test_data_dirs_defined():
-    from hn_simulator.config import DATA_DIR, RAW_DIR, PROCESSED_DIR, MODELS_DIR, LANCEDB_DIR
+    from hackernews_simulator.config import DATA_DIR, RAW_DIR, PROCESSED_DIR, MODELS_DIR, LANCEDB_DIR
     assert all(isinstance(d, Path) for d in [DATA_DIR, RAW_DIR, PROCESSED_DIR, MODELS_DIR, LANCEDB_DIR])
     assert str(RAW_DIR).startswith(str(DATA_DIR))
     assert str(PROCESSED_DIR).startswith(str(DATA_DIR))
@@ -18,19 +18,19 @@ def test_data_dirs_defined():
 
 
 def test_hf_dataset_url():
-    from hn_simulator.config import HF_DATASET_URL
+    from hackernews_simulator.config import HF_DATASET_URL
     assert HF_DATASET_URL == "hf://datasets/open-index/hacker-news/data/*/*.parquet"
 
 
 def test_model_params():
-    from hn_simulator.config import LIGHTGBM_PARAMS
+    from hackernews_simulator.config import LIGHTGBM_PARAMS
     assert isinstance(LIGHTGBM_PARAMS, dict)
     assert "objective" in LIGHTGBM_PARAMS
     assert "num_leaves" in LIGHTGBM_PARAMS
 
 
 def test_score_thresholds():
-    from hn_simulator.config import SCORE_THRESHOLDS
+    from hackernews_simulator.config import SCORE_THRESHOLDS
     assert "flop" in SCORE_THRESHOLDS
     assert "low" in SCORE_THRESHOLDS
     assert "moderate" in SCORE_THRESHOLDS
@@ -41,24 +41,24 @@ def test_score_thresholds():
 
 
 def test_embedding_model_name():
-    from hn_simulator.config import EMBEDDING_MODEL
+    from hackernews_simulator.config import EMBEDDING_MODEL
     assert EMBEDDING_MODEL == "all-MiniLM-L6-v2"
 
 
 def test_rag_config():
-    from hn_simulator.config import RAG_TOP_K, RAG_SAMPLE_SIZE
+    from hackernews_simulator.config import RAG_TOP_K, RAG_SAMPLE_SIZE
     assert isinstance(RAG_TOP_K, int) and RAG_TOP_K > 0
     assert isinstance(RAG_SAMPLE_SIZE, int) and RAG_SAMPLE_SIZE > 0
 
 
 def test_temporal_split_date():
-    from hn_simulator.config import TRAIN_CUTOFF_DATE, VAL_START_DATE
+    from hackernews_simulator.config import TRAIN_CUTOFF_DATE, VAL_START_DATE
     assert TRAIN_CUTOFF_DATE == "2023-01-01"
     assert VAL_START_DATE == "2023-01-01"
 
 
 def test_ensure_dirs_creates_directories(tmp_path, monkeypatch):
-    from hn_simulator import config
+    from hackernews_simulator import config
     monkeypatch.setattr(config, "DATA_DIR", tmp_path / "data")
     monkeypatch.setattr(config, "RAW_DIR", tmp_path / "data" / "raw")
     monkeypatch.setattr(config, "PROCESSED_DIR", tmp_path / "data" / "processed")

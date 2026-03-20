@@ -2,10 +2,10 @@
 import click
 import pandas as pd
 
-from hn_simulator.config import LANCEDB_DIR, RAW_DIR, ensure_dirs
-from hn_simulator.data.preprocess import preprocess_comments, preprocess_stories
-from hn_simulator.features.text import extract_title_embeddings
-from hn_simulator.rag.index import build_comment_index, build_story_index
+from hackernews_simulator.config import LANCEDB_DIR, RAW_DIR, ensure_dirs
+from hackernews_simulator.data.preprocess import preprocess_comments, preprocess_stories
+from hackernews_simulator.features.text import extract_title_embeddings
+from hackernews_simulator.rag.index import build_comment_index, build_story_index
 
 
 @click.command()

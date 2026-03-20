@@ -22,7 +22,7 @@ def synthetic_training_data():
 
 class TestTemporalSplit:
     def test_split_by_date(self, sample_stories_df):
-        from hn_simulator.model.train import temporal_split
+        from hackernews_simulator.model.train import temporal_split
         train_df, val_df = temporal_split(sample_stories_df, cutoff="2023-01-01")
         assert len(train_df) > 0
         assert len(val_df) > 0
@@ -31,7 +31,7 @@ class TestTemporalSplit:
         assert all(val_df["time"] >= pd.Timestamp("2023-01-01", tz="UTC"))
 
     def test_no_data_leak(self, sample_stories_df):
-        from hn_simulator.model.train import temporal_split
+        from hackernews_simulator.model.train import temporal_split
         train_df, val_df = temporal_split(sample_stories_df, cutoff="2023-01-01")
         train_ids = set(train_df["id"])
         val_ids = set(val_df["id"])
@@ -40,7 +40,7 @@ class TestTemporalSplit:
 
 class TestTrainScoreModel:
     def test_returns_booster(self, synthetic_training_data):
-        from hn_simulator.model.train import train_score_model
+        from hackernews_simulator.model.train import train_score_model
         X, y, names = synthetic_training_data
         model, metrics = train_score_model(
             X_train=X[:400], y_train=y[:400],
@@ -50,7 +50,7 @@ class TestTrainScoreModel:
         assert isinstance(model, lgb.Booster)
 
     def test_returns_metrics_with_expected_keys(self, synthetic_training_data):
-        from hn_simulator.model.train import train_score_model
+        from hackernews_simulator.model.train import train_score_model
         X, y, names = synthetic_training_data
         model, metrics = train_score_model(
             X_train=X[:400], y_train=y[:400],
@@ -62,7 +62,7 @@ class TestTrainScoreModel:
         assert metrics["val_rmse"] > 0
 
     def test_model_predicts_with_positive_correlation(self, synthetic_training_data):
-        from hn_simulator.model.train import train_score_model
+        from hackernews_simulator.model.train import train_score_model
         X, y, names = synthetic_training_data
         model, _ = train_score_model(
             X_train=X[:400], y_train=y[:400],
@@ -76,7 +76,7 @@ class TestTrainScoreModel:
 
 class TestTrainCommentModel:
     def test_returns_booster(self, synthetic_training_data):
-        from hn_simulator.model.train import train_comment_count_model
+        from hackernews_simulator.model.train import train_comment_count_model
         X, y, names = synthetic_training_data
         model, metrics = train_comment_count_model(
             X_train=X[:400], y_train=y[:400],
@@ -88,7 +88,7 @@ class TestTrainCommentModel:
 
 class TestSaveLoadModel:
     def test_roundtrip_predictions_identical(self, synthetic_training_data, tmp_path):
-        from hn_simulator.model.train import train_score_model, save_model, load_model
+        from hackernews_simulator.model.train import train_score_model, save_model, load_model
         X, y, names = synthetic_training_data
         model, _ = train_score_model(
             X_train=X[:400], y_train=y[:400],
@@ -103,6 +103,6 @@ class TestSaveLoadModel:
         np.testing.assert_array_almost_equal(preds_original, preds_loaded)
 
     def test_load_nonexistent_raises(self, tmp_path):
-        from hn_simulator.model.train import load_model
+        from hackernews_simulator.model.train import load_model
         with pytest.raises(FileNotFoundError):
             load_model(tmp_path / "nonexistent_model.txt")

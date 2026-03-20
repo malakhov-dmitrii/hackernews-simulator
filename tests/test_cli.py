@@ -12,19 +12,19 @@ def cli_runner():
 
 class TestCliPredict:
     def test_predict_command_exists(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["predict", "--help"])
         assert result.exit_code == 0
         assert "title" in result.output.lower()
 
     def test_predict_requires_title(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["predict"])
         assert result.exit_code != 0
 
-    @patch("hn_simulator.cli.HNSimulator")
+    @patch("hackernews_simulator.cli.HNSimulator")
     def test_predict_outputs_json(self, mock_sim_cls, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         mock_sim = MagicMock()
         mock_result = MagicMock()
         mock_result.to_dict.return_value = {
@@ -50,9 +50,9 @@ class TestCliPredict:
         output = json.loads(result.output)
         assert output["predicted_score"] == 42.5
 
-    @patch("hn_simulator.cli.HNSimulator")
+    @patch("hackernews_simulator.cli.HNSimulator")
     def test_predict_human_readable_output(self, mock_sim_cls, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         mock_sim = MagicMock()
         mock_result = MagicMock()
         mock_result.predicted_score = 42.5
@@ -82,18 +82,18 @@ class TestCliPredict:
 
 class TestCliTrain:
     def test_train_command_exists(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["train", "--help"])
         assert result.exit_code == 0
 
     def test_train_has_sample_size_option(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["train", "--help"])
         assert result.exit_code == 0
         assert "sample-size" in result.output
 
     def test_train_has_min_score_option(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["train", "--help"])
         assert result.exit_code == 0
         assert "min-score" in result.output
@@ -101,12 +101,12 @@ class TestCliTrain:
 
 class TestCliFetch:
     def test_fetch_command_exists(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["fetch", "--help"])
         assert result.exit_code == 0
 
     def test_fetch_has_sample_size_option(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["fetch", "--help"])
         assert result.exit_code == 0
         assert "sample-size" in result.output
@@ -114,12 +114,12 @@ class TestCliFetch:
 
 class TestCliBuildIndex:
     def test_build_index_command_exists(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["build-index", "--help"])
         assert result.exit_code == 0
 
     def test_build_index_has_sample_size_option(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["build-index", "--help"])
         assert result.exit_code == 0
         assert "sample-size" in result.output
@@ -127,12 +127,12 @@ class TestCliBuildIndex:
 
 class TestCliBacktest:
     def test_backtest_command_exists(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["backtest", "--help"])
         assert result.exit_code == 0
 
     def test_backtest_has_features_dir_option(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["backtest", "--help"])
         assert result.exit_code == 0
         assert "features-dir" in result.output
@@ -140,17 +140,17 @@ class TestCliBacktest:
 
 class TestCliSuggestLoop:
     def test_suggest_loop_command_exists(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["suggest-loop", "--help"])
         assert result.exit_code == 0
 
     def test_suggest_loop_requires_title(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["suggest-loop"])
         assert result.exit_code != 0
 
     def test_suggest_loop_has_max_iterations_option(self, cli_runner):
-        from hn_simulator.cli import main
+        from hackernews_simulator.cli import main
         result = cli_runner.invoke(main, ["suggest-loop", "--help"])
         assert result.exit_code == 0
         assert "max-iterations" in result.output

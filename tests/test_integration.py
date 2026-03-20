@@ -15,10 +15,10 @@ from unittest.mock import MagicMock
 @pytest.fixture
 def full_pipeline(tmp_path, sample_stories_df, sample_comments_df, mock_embedding_model):
     """Build complete pipeline artifacts from sample data."""
-    from hn_simulator.data.preprocess import preprocess_stories, preprocess_comments
-    from hn_simulator.features.pipeline import build_feature_matrix
-    from hn_simulator.model.train import train_score_model, train_comment_count_model, save_model
-    from hn_simulator.rag.index import build_story_index, build_comment_index
+    from hackernews_simulator.data.preprocess import preprocess_stories, preprocess_comments
+    from hackernews_simulator.features.pipeline import build_feature_matrix
+    from hackernews_simulator.model.train import train_score_model, train_comment_count_model, save_model
+    from hackernews_simulator.rag.index import build_story_index, build_comment_index
 
     # Preprocess
     stories = preprocess_stories(sample_stories_df, min_score=0)
@@ -40,7 +40,7 @@ def full_pipeline(tmp_path, sample_stories_df, sample_comments_df, mock_embeddin
     save_model(comment_model, models_dir / "comment_model.txt")
 
     # Build RAG index — uses mock embeddings
-    from hn_simulator.features.text import extract_title_embeddings
+    from hackernews_simulator.features.text import extract_title_embeddings
     embeddings = extract_title_embeddings(stories)
     lancedb_dir = tmp_path / "lancedb"
     build_story_index(stories, embeddings, db_path=lancedb_dir)
@@ -57,7 +57,7 @@ def full_pipeline(tmp_path, sample_stories_df, sample_comments_df, mock_embeddin
 
 class TestEndToEnd:
     def test_full_prediction_pipeline(self, full_pipeline, mock_embedding_model):
-        from hn_simulator.simulator import HNSimulator
+        from hackernews_simulator.simulator import HNSimulator
 
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -97,7 +97,7 @@ class TestEndToEnd:
         ])
 
     def test_prediction_without_comments(self, full_pipeline, mock_embedding_model):
-        from hn_simulator.simulator import HNSimulator
+        from hackernews_simulator.simulator import HNSimulator
 
         sim = HNSimulator(
             score_model_path=full_pipeline["score_model_path"],

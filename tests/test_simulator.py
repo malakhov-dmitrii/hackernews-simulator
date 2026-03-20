@@ -11,8 +11,8 @@ from pathlib import Path
 @pytest.fixture
 def mock_models(tmp_path, mock_embedding_model):
     """Create mock model files and LanceDB index. Fixed seed."""
-    from hn_simulator.model.train import train_score_model, train_comment_count_model, save_model
-    from hn_simulator.rag.index import build_story_index, build_comment_index
+    from hackernews_simulator.model.train import train_score_model, train_comment_count_model, save_model
+    from hackernews_simulator.rag.index import build_story_index, build_comment_index
     import pandas as pd
 
     rng = np.random.default_rng(42)
@@ -61,7 +61,7 @@ def mock_models(tmp_path, mock_embedding_model):
 
 class TestSimulator:
     def test_simulate_returns_result(self, mock_models, mock_embedding_model):
-        from hn_simulator.simulator import HNSimulator
+        from hackernews_simulator.simulator import HNSimulator
 
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -82,7 +82,7 @@ class TestSimulator:
         assert isinstance(result.similar_stories, list)
 
     def test_simulate_without_comments(self, mock_models, mock_embedding_model):
-        from hn_simulator.simulator import HNSimulator
+        from hackernews_simulator.simulator import HNSimulator
 
         sim = HNSimulator(
             score_model_path=mock_models["score_model_path"],
@@ -97,7 +97,7 @@ class TestSimulator:
 
 class TestSimulationResult:
     def test_to_dict(self):
-        from hn_simulator.simulator import SimulationResult
+        from hackernews_simulator.simulator import SimulationResult
         result = SimulationResult(
             predicted_score=42.5,
             predicted_comments=15.0,
@@ -118,7 +118,7 @@ class TestSimulationResult:
         assert "expected_score" in d
 
     def test_optional_fields_defaults(self):
-        from hn_simulator.simulator import SimulationResult
+        from hackernews_simulator.simulator import SimulationResult
         result = SimulationResult(
             predicted_score=10.0,
             predicted_comments=5.0,
@@ -132,7 +132,7 @@ class TestSimulationResult:
         assert result.expected_score is None
 
     def test_to_dict_with_v2_fields(self):
-        from hn_simulator.simulator import SimulationResult
+        from hackernews_simulator.simulator import SimulationResult
         result = SimulationResult(
             predicted_score=80.0,
             predicted_comments=20.0,

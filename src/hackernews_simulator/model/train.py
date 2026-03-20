@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.class_weight import compute_class_weight
 
-from hn_simulator.config import LIGHTGBM_PARAMS, LIGHTGBM_MULTICLASS_PARAMS
+from hackernews_simulator.config import LIGHTGBM_PARAMS, LIGHTGBM_MULTICLASS_PARAMS
 
 
 def temporal_split(

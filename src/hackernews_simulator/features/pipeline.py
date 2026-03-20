@@ -4,8 +4,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from hn_simulator.features.structural import extract_structural_features
-from hn_simulator.features.text import extract_title_embeddings
+from hackernews_simulator.features.structural import extract_structural_features
+from hackernews_simulator.features.text import extract_title_embeddings
 
 
 def build_feature_matrix(df: pd.DataFrame) -> tuple[np.ndarray, list[str]]:
@@ -41,7 +41,7 @@ def build_feature_matrix_for_input(
     Constructs a single-row DataFrame with open-index schema columns,
     runs it through preprocess_stories and build_feature_matrix.
     """
-    from hn_simulator.data.preprocess import preprocess_stories
+    from hackernews_simulator.data.preprocess import preprocess_stories
 
     df = pd.DataFrame(
         {

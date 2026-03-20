@@ -5,7 +5,7 @@ import json
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from hn_simulator.simulator import HNSimulator
+    from hackernews_simulator.simulator import HNSimulator
 
 _SYSTEM_PROMPT = (
     "You are an expert at crafting Hacker News titles. "
@@ -66,7 +66,7 @@ def suggest_variants(
         raw_text = response.content[0].text
     else:
         # Headless Claude CLI — no API key needed
-        from hn_simulator.claude_runner import run_claude
+        from hackernews_simulator.claude_runner import run_claude
         raw_text = run_claude(
             prompt=user_message,
             system_prompt=_SYSTEM_PROMPT,

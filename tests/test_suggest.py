@@ -8,9 +8,9 @@ import numpy as np
 @pytest.fixture
 def mock_models_and_simulator(tmp_path, mock_embedding_model):
     """Create a small trained HNSimulator for suggest tests."""
-    from hn_simulator.model.train import train_score_model, train_comment_count_model, save_model
-    from hn_simulator.rag.index import build_story_index, build_comment_index
-    from hn_simulator.simulator import HNSimulator
+    from hackernews_simulator.model.train import train_score_model, train_comment_count_model, save_model
+    from hackernews_simulator.rag.index import build_story_index, build_comment_index
+    from hackernews_simulator.simulator import HNSimulator
     import pandas as pd
 
     rng = np.random.default_rng(42)
@@ -60,7 +60,7 @@ def mock_models_and_simulator(tmp_path, mock_embedding_model):
 
 class TestSuggestVariants:
     def test_returns_list_of_variants(self):
-        from hn_simulator.suggest import suggest_variants
+        from hackernews_simulator.suggest import suggest_variants
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.content = [MagicMock(text=json.dumps([
@@ -79,7 +79,7 @@ class TestSuggestVariants:
             assert "description" in s
 
     def test_handles_malformed_response(self):
-        from hn_simulator.suggest import suggest_variants
+        from hackernews_simulator.suggest import suggest_variants
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.content = [MagicMock(text="not json")]
@@ -90,10 +90,10 @@ class TestSuggestVariants:
         assert suggestions == []
 
     def test_without_client_falls_back_to_cli(self):
-        from hn_simulator.suggest import suggest_variants
+        from hackernews_simulator.suggest import suggest_variants
         from unittest.mock import patch
         # Without client, should attempt Claude CLI (which we mock here)
-        with patch("hn_simulator.claude_runner.run_claude", return_value='[{"title": "CLI suggestion", "description": "via CLI"}]'):
+        with patch("hackernews_simulator.claude_runner.run_claude", return_value='[{"title": "CLI suggestion", "description": "via CLI"}]'):
             suggestions = suggest_variants({"title": "T", "description": "D"}, client=None)
             assert len(suggestions) == 1
             assert suggestions[0]["title"] == "CLI suggestion"
@@ -101,7 +101,7 @@ class TestSuggestVariants:
 
 class TestSuggestAndScore:
     def test_returns_scored_suggestions(self, mock_models_and_simulator):
-        from hn_simulator.suggest import suggest_and_score
+        from hackernews_simulator.suggest import suggest_and_score
         sim = mock_models_and_simulator
 
         mock_client = MagicMock()
@@ -123,7 +123,7 @@ class TestSuggestAndScore:
             assert "is_original" in r
 
     def test_includes_original_in_ranking(self, mock_models_and_simulator):
-        from hn_simulator.suggest import suggest_and_score
+        from hackernews_simulator.suggest import suggest_and_score
         sim = mock_models_and_simulator
 
         mock_client = MagicMock()
@@ -153,7 +153,7 @@ class TestIterativeOptimize:
         return mock_client
 
     def test_iterative_returns_dict_with_required_keys(self, mock_models_and_simulator):
-        from hn_simulator.suggest import iterative_optimize
+        from hackernews_simulator.suggest import iterative_optimize
         sim = mock_models_and_simulator
 
         mock_client = self._make_client([
@@ -175,7 +175,7 @@ class TestIterativeOptimize:
         assert "predicted_score" in result["best"]
 
     def test_iterative_max_iterations_respected(self, mock_models_and_simulator):
-        from hn_simulator.suggest import iterative_optimize
+        from hackernews_simulator.suggest import iterative_optimize
         sim = mock_models_and_simulator
 
         # Provide enough unique suggestions for each iteration with distinct titles
@@ -202,7 +202,7 @@ class TestIterativeOptimize:
         assert result["iterations"] <= max_iter
 
     def test_iterative_convergence_stops_early(self, mock_models_and_simulator):
-        from hn_simulator.suggest import iterative_optimize
+        from hackernews_simulator.suggest import iterative_optimize
         sim = mock_models_and_simulator
 
         # All calls return the same title — after first iteration it's in seen_titles
@@ -224,7 +224,7 @@ class TestIterativeOptimize:
         assert result["iterations"] < 5
 
     def test_iterative_tracks_seen_titles(self, mock_models_and_simulator):
-        from hn_simulator.suggest import iterative_optimize
+        from hackernews_simulator.suggest import iterative_optimize
         sim = mock_models_and_simulator
 
         mock_client = self._make_client([

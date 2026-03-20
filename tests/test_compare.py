@@ -8,9 +8,9 @@ from dataclasses import dataclass
 @pytest.fixture
 def mock_models_and_simulator(tmp_path, mock_embedding_model):
     """Create a small trained HNSimulator for compare/suggest tests."""
-    from hn_simulator.model.train import train_score_model, train_comment_count_model, save_model
-    from hn_simulator.rag.index import build_story_index, build_comment_index
-    from hn_simulator.simulator import HNSimulator
+    from hackernews_simulator.model.train import train_score_model, train_comment_count_model, save_model
+    from hackernews_simulator.rag.index import build_story_index, build_comment_index
+    from hackernews_simulator.simulator import HNSimulator
     import pandas as pd
 
     rng = np.random.default_rng(42)
@@ -60,7 +60,7 @@ def mock_models_and_simulator(tmp_path, mock_embedding_model):
 
 class TestCompareVariants:
     def test_returns_ranked_results(self, mock_models_and_simulator):
-        from hn_simulator.compare import compare_variants
+        from hackernews_simulator.compare import compare_variants
         sim = mock_models_and_simulator
 
         variants = [
@@ -73,7 +73,7 @@ class TestCompareVariants:
         assert results[0].predicted_score >= results[1].predicted_score
 
     def test_preserves_variant_index(self, mock_models_and_simulator):
-        from hn_simulator.compare import compare_variants
+        from hackernews_simulator.compare import compare_variants
         sim = mock_models_and_simulator
 
         variants = [
@@ -86,7 +86,7 @@ class TestCompareVariants:
             assert hasattr(r, "title")
 
     def test_single_variant(self, mock_models_and_simulator):
-        from hn_simulator.compare import compare_variants
+        from hackernews_simulator.compare import compare_variants
         sim = mock_models_and_simulator
 
         variants = [{"title": "Only one", "description": "Solo"}]
@@ -94,7 +94,7 @@ class TestCompareVariants:
         assert len(results) == 1
 
     def test_empty_variants_raises(self, mock_models_and_simulator):
-        from hn_simulator.compare import compare_variants
+        from hackernews_simulator.compare import compare_variants
         sim = mock_models_and_simulator
 
         with pytest.raises(ValueError, match="at least one variant"):
@@ -103,7 +103,7 @@ class TestCompareVariants:
 
 class TestComparisonExplanation:
     def test_generate_explanation_returns_string(self):
-        from hn_simulator.compare import generate_comparison_explanation
+        from hackernews_simulator.compare import generate_comparison_explanation
 
         ranked = [
             {"variant_index": 0, "title": "Best variant", "predicted_score": 100.0, "reception_label": "viral"},
@@ -119,7 +119,7 @@ class TestComparisonExplanation:
         assert len(explanation) > 10
 
     def test_works_without_client(self):
-        from hn_simulator.compare import generate_comparison_explanation
+        from hackernews_simulator.compare import generate_comparison_explanation
         ranked = [
             {"variant_index": 0, "title": "Best", "predicted_score": 100.0, "reception_label": "viral"},
         ]
@@ -129,7 +129,7 @@ class TestComparisonExplanation:
 
 class TestLoadVariantsFromYaml:
     def test_load_valid_yaml(self, tmp_path):
-        from hn_simulator.compare import load_variants_from_file
+        from hackernews_simulator.compare import load_variants_from_file
         yaml_content = '''variants:
   - title: "Show HN: Test"
     description: "A test project"
@@ -144,14 +144,14 @@ class TestLoadVariantsFromYaml:
         assert variants[1]["description"] == "Asking about test"
 
     def test_load_invalid_yaml_raises(self, tmp_path):
-        from hn_simulator.compare import load_variants_from_file
+        from hackernews_simulator.compare import load_variants_from_file
         path = tmp_path / "bad.yaml"
         path.write_text("not: valid: yaml: [")
         with pytest.raises((ValueError, Exception)):
             load_variants_from_file(path)
 
     def test_load_missing_title_raises(self, tmp_path):
-        from hn_simulator.compare import load_variants_from_file
+        from hackernews_simulator.compare import load_variants_from_file
         yaml_content = '''variants:
   - description: "Missing title"
 '''

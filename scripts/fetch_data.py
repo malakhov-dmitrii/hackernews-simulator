@@ -1,7 +1,7 @@
 """Fetch stratified HN stories sample from HuggingFace via open-index/hacker-news."""
 import click
-from hn_simulator.config import RAW_DIR, ensure_dirs
-from hn_simulator.data.fetch import fetch_stories_stratified, fetch_comments_for_stories
+from hackernews_simulator.config import RAW_DIR, ensure_dirs
+from hackernews_simulator.data.fetch import fetch_stories_stratified, fetch_comments_for_stories
 
 
 @click.command()

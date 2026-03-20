@@ -56,3 +56,10 @@
 {"t":0,"agent":"a7ec4c9","agent_type":"executor","event":"agent_stop","success":true,"duration_ms":398849}
 {"t":0,"agent":"ad7e2c5","agent_type":"executor","event":"agent_start","parent_mode":"none"}
 {"t":0,"agent":"ad7e2c5","agent_type":"executor","event":"agent_stop","success":true,"duration_ms":333255}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"beast:beast"}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"beast:beast-plan"}
+{"t":0,"agent":"a6e583d","agent_type":"beast:planner","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a6e583d","agent_type":"beast:planner","event":"agent_stop","success":true,"duration_ms":220211}
+{"t":0,"agent":"a4300dd","agent_type":"executor","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ac459da","agent_type":"executor","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ac459da","agent_type":"executor","event":"agent_stop","success":true,"duration_ms":56181}
