@@ -49,6 +49,20 @@ class TestRetrieveSimilar:
         assert isinstance(comments, list)
         assert len(comments) <= 10
 
+    def test_retrieve_comments_where_filter_correctness(self, populated_lancedb):
+        from hn_simulator.rag.retrieve import retrieve_comments_for_story
+        # Story id=1 has exactly 2 comments (parent=[1,1,2,3] in fixture)
+        comments_1 = retrieve_comments_for_story(story_id=1, db_path=populated_lancedb, limit=10)
+        assert len(comments_1) == 2
+        assert all(c["parent"] == 1 for c in comments_1)
+        # Story id=2 has exactly 1 comment
+        comments_2 = retrieve_comments_for_story(story_id=2, db_path=populated_lancedb, limit=10)
+        assert len(comments_2) == 1
+        assert comments_2[0]["parent"] == 2
+        # Story id=99999 has no comments
+        comments_none = retrieve_comments_for_story(story_id=99999, db_path=populated_lancedb, limit=10)
+        assert comments_none == []
+
 
 class TestRetrieveErrorPaths:
     def test_retrieve_from_nonexistent_table(self, tmp_path):
