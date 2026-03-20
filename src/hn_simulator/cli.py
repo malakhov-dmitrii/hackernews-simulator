@@ -5,6 +5,7 @@ import json
 import sys
 
 import click
+import numpy as np
 
 from hn_simulator.config import LANCEDB_DIR, MODELS_DIR, RAW_DIR, ensure_dirs
 from hn_simulator.simulator import HNSimulator
@@ -37,6 +38,28 @@ def _human_output(title: str, result) -> None:
             bar = _bar(prob)
             click.echo(f"    {label:<10}{bar} {int(prob * 100)}%")
         click.echo()
+    # Percentile and expected score (v2)
+    if result.percentile is not None:
+        click.echo(f"  Percentile: Top {result.percentile:.1f}% of HN stories")
+    if result.expected_score is not None:
+        click.echo(f"  Expected Score: ~{int(result.expected_score)} points (from multiclass model)")
+    if result.percentile is not None or result.expected_score is not None:
+        click.echo()
+
+    # SHAP explanation (v2)
+    if result.shap_features:
+        click.echo("  --- Why This Score ---")
+        for feat in result.shap_features:
+            arrow = "↑" if feat["direction"] == "up" else "↓"
+            click.echo(f"  {arrow} {feat['feature']} ({feat['importance']:+.2f})")
+        click.echo()
+
+    # Time recommendation (v2)
+    if result.time_recommendation:
+        click.echo("  --- Posting Advice ---")
+        click.echo(f"  {result.time_recommendation}")
+        click.echo()
+
     if result.simulated_comments:
         click.echo("  --- Simulated Comments ---")
         click.echo()
@@ -144,6 +167,82 @@ def fetch(sample_size: int, output_dir: str | None) -> None:
     path = out / "stories.parquet"
     df.to_parquet(path)
     click.echo(f"Saved {len(df)} stories to {path}")
+
+
+@main.command()
+@click.option("--features-dir", default=None, help="Directory with processed features (default: PROCESSED_DIR)")
+def backtest(features_dir: str | None) -> None:
+    """Run backtest on stored feature data and print report."""
+    from hn_simulator.config import PROCESSED_DIR
+    import json as _json
+    from pathlib import Path as _Path
+
+    src = _Path(features_dir) if features_dir else PROCESSED_DIR
+    features_path = src / "features.npy"
+    labels_path = src / "labels_score.npy"
+    names_path = src / "feature_names.json"
+
+    if not features_path.exists() or not labels_path.exists():
+        click.echo(f"Features not found at {src}. Run 'train' first.", err=True)
+        sys.exit(1)
+
+    click.echo("Loading features...")
+    X = np.load(str(features_path))
+    y = np.load(str(labels_path))
+    with open(str(names_path)) as f:
+        feature_names = _json.load(f)
+
+    click.echo(f"Running backtest on {len(X)} samples...")
+    from hn_simulator.model.backtest import run_backtest, format_backtest_report
+    results = run_backtest(X, y, feature_names)
+    click.echo(format_backtest_report(results))
+
+
+@main.command("suggest-loop")
+@click.option("--title", required=True, help="Story title to optimize")
+@click.option("--description", default="", help="Optional description")
+@click.option("--max-iterations", default=5, show_default=True, help="Maximum optimization iterations")
+def suggest_loop(title: str, description: str, max_iterations: int) -> None:
+    """Iteratively optimize a title using the suggest loop."""
+    score_model_path = MODELS_DIR / "score_model.txt"
+    comment_model_path = MODELS_DIR / "comment_model.txt"
+
+    try:
+        simulator = HNSimulator(
+            score_model_path=score_model_path,
+            comment_model_path=comment_model_path,
+            lancedb_path=LANCEDB_DIR,
+        )
+    except Exception as exc:
+        click.echo(f"Error loading simulator: {exc}", err=True)
+        sys.exit(1)
+
+    click.echo(f"Optimizing: {title!r}")
+    click.echo(f"Running up to {max_iterations} iteration(s)...")
+
+    from hn_simulator.suggest import iterative_optimize
+    result = iterative_optimize(
+        simulator=simulator,
+        original={"title": title, "description": description},
+        client=None,
+        max_iterations=max_iterations,
+    )
+
+    sep = "═" * 43
+    click.echo(sep)
+    click.echo("  Suggest Loop Results")
+    click.echo(sep)
+    click.echo(f"  Iterations run: {result['iterations']}")
+    click.echo(f"  Score improvement: +{result['improvement']:.1f}")
+    click.echo()
+    click.echo(f"  Best title: {result['best']['title']}")
+    click.echo(f"  Best score: ~{int(result['best']['predicted_score'])} points")
+    if result["all_variants"]:
+        click.echo()
+        click.echo("  All variants tried:")
+        for v in result["all_variants"]:
+            click.echo(f"    ~{int(v['predicted_score']):<6} {v['title']}")
+    click.echo(sep)
 
 
 @main.command("build-index")

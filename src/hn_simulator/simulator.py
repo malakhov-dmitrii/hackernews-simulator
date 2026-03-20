@@ -8,7 +8,7 @@ import numpy as np
 
 from hn_simulator.features.pipeline import build_feature_matrix_for_input
 from hn_simulator.features.text import embed_texts
-from hn_simulator.model.labels import classify_reception_with_confidence
+from hn_simulator.model.labels import classify_reception_with_confidence, expected_score_from_probs
 from hn_simulator.model.predict import predict_score
 from hn_simulator.model.train import load_model
 from hn_simulator.rag.retrieve import retrieve_comments_for_story, retrieve_similar_stories
@@ -25,6 +25,10 @@ class SimulationResult:
     label_distribution: dict[str, float]
     simulated_comments: list[dict] = field(default_factory=list)
     similar_stories: list[dict] = field(default_factory=list)
+    percentile: float | None = None
+    shap_features: list[dict] = field(default_factory=list)
+    time_recommendation: str = ""
+    expected_score: float | None = None
 
     def to_dict(self) -> dict:
         """Return a plain dict suitable for JSON serialization."""
@@ -36,6 +40,10 @@ class SimulationResult:
             "label_distribution": self.label_distribution,
             "simulated_comments": self.simulated_comments,
             "similar_stories": self.similar_stories,
+            "percentile": self.percentile,
+            "shap_features": self.shap_features,
+            "time_recommendation": self.time_recommendation,
+            "expected_score": self.expected_score,
         }
 
 
@@ -48,11 +56,38 @@ class HNSimulator:
         comment_model_path: Path | str,
         lancedb_path: Path | str,
         claude_client=None,
+        multiclass_model_path: Path | str | None = None,
+        sorted_scores_path: Path | str | None = None,
+        time_stats_path: Path | str | None = None,
     ) -> None:
         self.score_model = load_model(Path(score_model_path))
         self.comment_model = load_model(Path(comment_model_path))
         self.lancedb_path = Path(lancedb_path)
         self.claude_client = claude_client
+
+        # Optional v2 models/data
+        self.multiclass_model = None
+        if multiclass_model_path is not None:
+            try:
+                self.multiclass_model = load_model(Path(multiclass_model_path))
+            except FileNotFoundError:
+                pass
+
+        self.sorted_scores: np.ndarray | None = None
+        if sorted_scores_path is not None:
+            try:
+                from hn_simulator.model.calibrate import load_sorted_scores
+                self.sorted_scores = load_sorted_scores(Path(sorted_scores_path))
+            except (FileNotFoundError, Exception):
+                pass
+
+        self.time_stats: tuple | None = None
+        if time_stats_path is not None:
+            try:
+                from hn_simulator.model.calibrate import load_time_stats
+                self.time_stats = load_time_stats(Path(time_stats_path))
+            except (FileNotFoundError, Exception):
+                pass
 
     def simulate(
         self,
@@ -110,6 +145,42 @@ class HNSimulator:
                 client=self.claude_client,
             )
 
+        # 7. Compute v2 enrichments
+        percentile: float | None = None
+        expected_score_val: float | None = None
+        shap_features: list[dict] = []
+        time_recommendation: str = ""
+
+        # Multiclass model: expected score from class probs
+        if self.multiclass_model is not None:
+            probs = self.multiclass_model.predict(X)  # shape (1, 5)
+            expected_score_val = expected_score_from_probs(probs[0])
+
+        # Percentile calibration
+        if self.sorted_scores is not None:
+            from hn_simulator.model.calibrate import score_to_percentile
+            percentile = score_to_percentile(predicted_score, self.sorted_scores)
+
+        # SHAP explanation — use whichever model is available
+        try:
+            from hn_simulator.model.explain import explain_prediction
+            explain_model = self.multiclass_model if self.multiclass_model is not None else self.score_model
+            _, feature_names = build_feature_matrix_for_input("", "")
+            shap_features = explain_prediction(
+                explain_model, X, feature_names, top_k=5
+            )
+        except Exception:
+            shap_features = []
+
+        # Time recommendation
+        if self.time_stats is not None:
+            from hn_simulator.model.calibrate import recommend_posting_time
+            hourly, daily = self.time_stats
+            rec = recommend_posting_time(hourly, daily)
+            time_recommendation = (
+                f"Best posting time: {rec['best_hour']} UTC on {rec['best_day_name']}"
+            )
+
         return SimulationResult(
             predicted_score=predicted_score,
             predicted_comments=predicted_comments,
@@ -118,4 +189,8 @@ class HNSimulator:
             label_distribution=label_distribution,
             simulated_comments=simulated_comments,
             similar_stories=similar_stories,
+            percentile=percentile,
+            shap_features=shap_features,
+            time_recommendation=time_recommendation,
+            expected_score=expected_score_val,
         )

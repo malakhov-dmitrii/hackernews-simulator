@@ -62,6 +62,10 @@ class TestCliPredict:
         mock_result.label_distribution = {"flop": 0.05, "moderate": 0.15, "hot": 0.55, "viral": 0.25}
         mock_result.simulated_comments = []
         mock_result.similar_stories = []
+        mock_result.percentile = None
+        mock_result.expected_score = None
+        mock_result.shap_features = []
+        mock_result.time_recommendation = ""
         mock_sim.simulate.return_value = mock_result
         mock_sim_cls.return_value = mock_sim
 
@@ -119,3 +123,34 @@ class TestCliBuildIndex:
         result = cli_runner.invoke(main, ["build-index", "--help"])
         assert result.exit_code == 0
         assert "sample-size" in result.output
+
+
+class TestCliBacktest:
+    def test_backtest_command_exists(self, cli_runner):
+        from hn_simulator.cli import main
+        result = cli_runner.invoke(main, ["backtest", "--help"])
+        assert result.exit_code == 0
+
+    def test_backtest_has_features_dir_option(self, cli_runner):
+        from hn_simulator.cli import main
+        result = cli_runner.invoke(main, ["backtest", "--help"])
+        assert result.exit_code == 0
+        assert "features-dir" in result.output
+
+
+class TestCliSuggestLoop:
+    def test_suggest_loop_command_exists(self, cli_runner):
+        from hn_simulator.cli import main
+        result = cli_runner.invoke(main, ["suggest-loop", "--help"])
+        assert result.exit_code == 0
+
+    def test_suggest_loop_requires_title(self, cli_runner):
+        from hn_simulator.cli import main
+        result = cli_runner.invoke(main, ["suggest-loop"])
+        assert result.exit_code != 0
+
+    def test_suggest_loop_has_max_iterations_option(self, cli_runner):
+        from hn_simulator.cli import main
+        result = cli_runner.invoke(main, ["suggest-loop", "--help"])
+        assert result.exit_code == 0
+        assert "max-iterations" in result.output

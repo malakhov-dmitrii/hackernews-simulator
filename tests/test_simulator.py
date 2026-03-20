@@ -111,3 +111,41 @@ class TestSimulationResult:
         assert isinstance(d, dict)
         assert d["predicted_score"] == 42.5
         assert d["reception_label"] == "hot"
+        # New optional fields present in dict
+        assert "percentile" in d
+        assert "shap_features" in d
+        assert "time_recommendation" in d
+        assert "expected_score" in d
+
+    def test_optional_fields_defaults(self):
+        from hn_simulator.simulator import SimulationResult
+        result = SimulationResult(
+            predicted_score=10.0,
+            predicted_comments=5.0,
+            reception_label="low",
+            confidence=0.6,
+            label_distribution={},
+        )
+        assert result.percentile is None
+        assert result.shap_features == []
+        assert result.time_recommendation == ""
+        assert result.expected_score is None
+
+    def test_to_dict_with_v2_fields(self):
+        from hn_simulator.simulator import SimulationResult
+        result = SimulationResult(
+            predicted_score=80.0,
+            predicted_comments=20.0,
+            reception_label="moderate",
+            confidence=0.7,
+            label_distribution={},
+            percentile=15.3,
+            shap_features=[{"feature": "is_show_hn", "importance": 2.3, "direction": "up"}],
+            time_recommendation="Best posting time: 9 UTC on Monday",
+            expected_score=75.0,
+        )
+        d = result.to_dict()
+        assert d["percentile"] == 15.3
+        assert len(d["shap_features"]) == 1
+        assert d["time_recommendation"] == "Best posting time: 9 UTC on Monday"
+        assert d["expected_score"] == 75.0
