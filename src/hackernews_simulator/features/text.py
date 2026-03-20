@@ -1,9 +1,14 @@
 """Text embedding features using sentence-transformers MiniLM-L6-v2."""
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import numpy as np
+
+# Suppress noisy model loading logs
+logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
+
 from sentence_transformers import SentenceTransformer
 
 MODEL_NAME = "all-MiniLM-L6-v2"

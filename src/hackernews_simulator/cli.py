@@ -2,7 +2,17 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
+import warnings
+
+# Suppress noisy warnings from dependencies before any imports
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", message=".*MarkupResemblesLocator.*")
+warnings.filterwarnings("ignore", message=".*table_names.*")
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 
 import click
 import numpy as np
