@@ -115,7 +115,8 @@ def predict(title: str, description: str, skip_comments: bool, output_json: bool
     if output_json:
         click.echo(json.dumps(result.to_dict(), indent=2))
     else:
-        _human_output(title, result)
+        from hackernews_simulator.rich_output import print_prediction
+        print_prediction(title, result)
 
 
 @main.command()
@@ -250,6 +251,118 @@ def suggest_loop(title: str, description: str, max_iterations: int) -> None:
         for v in result["all_variants"]:
             click.echo(f"    ~{int(v['predicted_score']):<6} {v['title']}")
     click.echo(sep)
+
+
+@main.command("compare")
+@click.option("--file", "variants_file", required=True, help="YAML file with list of title variants")
+def compare(variants_file: str) -> None:
+    """Compare multiple title variants and print a rich table."""
+    import yaml
+    from pathlib import Path
+    from hackernews_simulator.rich_output import print_comparison
+
+    path = Path(variants_file)
+    if not path.exists():
+        click.echo(f"File not found: {variants_file}", err=True)
+        sys.exit(1)
+
+    with open(path) as f:
+        variants = yaml.safe_load(f)
+
+    if not isinstance(variants, list):
+        click.echo("YAML file must contain a list of variant objects with at least a 'title' key.", err=True)
+        sys.exit(1)
+
+    score_model_path = MODELS_DIR / "score_model.txt"
+    comment_model_path = MODELS_DIR / "comment_model.txt"
+
+    try:
+        simulator = HNSimulator(
+            score_model_path=score_model_path,
+            comment_model_path=comment_model_path,
+            lancedb_path=LANCEDB_DIR,
+        )
+    except Exception as exc:
+        click.echo(f"Error loading simulator: {exc}", err=True)
+        sys.exit(1)
+
+    results = []
+    for v in variants:
+        title = v.get("title", "")
+        description = v.get("description", "")
+        result = simulator.simulate(title=title, description=description, generate_comments=False)
+        d = result.to_dict()
+        d["title"] = title
+        results.append(d)
+
+    print_comparison(results)
+
+
+@main.command()
+@click.option("--from-scratch", is_flag=True, default=False,
+              help="Fetch data and train from scratch instead of downloading pre-trained artifacts")
+def init(from_scratch: bool) -> None:
+    """Set up hackernews-simulator: download pre-trained models or train from scratch."""
+    from hackernews_simulator.config import DATA_DIR, ensure_dirs
+    ensure_dirs()
+
+    if from_scratch:
+        click.echo("Training from scratch...")
+        click.echo("Step 1/4: Fetching data...")
+        from hackernews_simulator.data.fetch import fetch_stories_stratified
+        df = fetch_stories_stratified(total_limit=100_000)
+        stories_path = RAW_DIR / "stories.parquet"
+        df.to_parquet(stories_path)
+        click.echo(f"  Fetched {len(df)} stories -> {stories_path}")
+
+        click.echo("Step 2/4: Preprocessing...")
+        from hackernews_simulator.data.preprocess import preprocess_stories
+        df = preprocess_stories(df)
+        click.echo(f"  Preprocessed {len(df)} stories")
+
+        click.echo("Step 3/4: Building feature matrix and training models...")
+        from hackernews_simulator.features.pipeline import build_feature_matrix
+        from hackernews_simulator.config import PROCESSED_DIR
+        X, feature_names = build_feature_matrix(df)
+        np.save(PROCESSED_DIR / "features.npy", X)
+        from hackernews_simulator.model.train import train_model, save_model
+        score_labels = df["score"].values
+        comment_labels = df["descendants"].fillna(0).values
+        score_model = train_model(X, score_labels)
+        comment_model = train_model(X, comment_labels)
+        save_model(score_model, MODELS_DIR / "score_model.txt")
+        save_model(comment_model, MODELS_DIR / "comment_model.txt")
+        click.echo("  Models saved.")
+
+        click.echo("Step 4/4: Building LanceDB index...")
+        import pandas as pd
+        from hackernews_simulator.rag.index import build_index as _build_index
+        _build_index(df, LANCEDB_DIR)
+        click.echo(f"  Index built at {LANCEDB_DIR}")
+
+        click.echo("Done! Models trained and index built.")
+    else:
+        click.echo("Downloading pre-trained models from HuggingFace...")
+        from hackernews_simulator.artifacts import check_artifacts, download_artifacts, download_lancedb
+        from hackernews_simulator.config import LANCEDB_DIR
+
+        if check_artifacts(DATA_DIR):
+            click.echo("Models already downloaded. Use --from-scratch to retrain.")
+            return
+
+        download_artifacts(DATA_DIR)
+        download_lancedb(LANCEDB_DIR)
+        click.echo("Done! Run: hn-sim predict --title 'Your title here'")
+
+
+@main.command()
+@click.option("--port", default=8501, show_default=True, help="Port to run Streamlit on")
+def ui(port: int) -> None:
+    """Launch the Streamlit web UI."""
+    import subprocess
+    from pathlib import Path
+    app_path = Path(__file__).resolve().parent.parent.parent / "streamlit_app.py"
+    subprocess.run([sys.executable, "-m", "streamlit", "run", str(app_path), "--server.port", str(port)])
 
 
 @main.command("build-index")
