@@ -1,0 +1,55 @@
+------------------------+------------+--+-
+
+╭─────────────────────────── HN Reaction Simulator ────────────────────────────╮
+│ Show HN: hackernews-simulator – predict how HN will react to your post       │
+│ before you submit it                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+  Predicted Score:    ~4 points
+  Predicted Comments: ~1
+  Reception: LOW (78% confidence)
+
+  Percentile: Top 68.8% of HN stories
+  Expected Score: ~10 points (multiclass)
+
+  Label Distribution:
+ flop        ████░░░░░░░░░░░░░░░░    21%   
+ low         ████████████████░░░░    78%   
+ moderate    ░░░░░░░░░░░░░░░░░░░░    0%    
+ hot         ░░░░░░░░░░░░░░░░░░░░    0%    
+ viral       ░░░░░░░░░░░░░░░░░░░░    0%    
+
+  Why This Score:
+  ↓ title_word_count (-0.01)
+  ↓ emb_226 (-0.00)
+  ↑ emb_202 (+0.00)
+  ↓ has_url (-0.01)
+  ↓ emb_55 (-0.01)
+
+  Posting Advice: Best posting time: 7 UTC on Sunday
+
+  Simulated Comments:
+
+  xkcd_fan_42 : So you trained a model to predict HN reactions, and your own 
+tool predicted a score of 4 for this post. That's either refreshingly honest or 
+a sign you should have iterated more before shipping.
+
+  plaintext_dev : 144K posts is not a lot of training data for something this 
+subjective. HN voting is heavily influenced by time-of-day, who's online, and 
+pure luck. I'd be curious what your actual accuracy looks like on held-out data 
+— SHAP explanations are nice but they don't tell you if the model is any good.
+
+  throwaway_ml : This is a Claude wrapper that calls itself ML. LightGBM for the
+score prediction is fine, but the 'realistic simulated comments' part is just 
+prompting an LLM. That's not a prediction, that's fanfiction.
+
+  old_hn_lurker : Someone builds one of these every couple of years. The 
+fundamental problem is that HN engagement is a fat-tailed distribution — most 
+posts get 0-5 points regardless of quality, and virality is driven by a handful 
+of power users and algorithmic timing. No feature set captures that.
+
+  vecdb_curious : The LanceDB RAG piece is actually the most interesting part to
+me. Using similar historical posts as context for comment generation is a clever
+approach. Any plans to open-source the dataset or the embeddings? Would love to 
+play with HN post similarity search on its own.
+
