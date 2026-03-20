@@ -86,14 +86,21 @@ def main() -> None:
 @click.option("--json", "output_json", is_flag=True, default=False, help="Output JSON instead of human-readable text")
 def predict(title: str, description: str, skip_comments: bool, output_json: bool) -> None:
     """Predict HN community reaction for a story."""
+    from hn_simulator.config import PROCESSED_DIR
     score_model_path = MODELS_DIR / "score_model.txt"
     comment_model_path = MODELS_DIR / "comment_model.txt"
+    multiclass_path = MODELS_DIR / "multiclass_model.txt"
+    sorted_scores_path = PROCESSED_DIR / "sorted_scores.npy"
+    time_stats_path = PROCESSED_DIR / "time_stats.json"
 
     try:
         simulator = HNSimulator(
             score_model_path=score_model_path,
             comment_model_path=comment_model_path,
             lancedb_path=LANCEDB_DIR,
+            multiclass_model_path=multiclass_path if multiclass_path.exists() else None,
+            sorted_scores_path=sorted_scores_path if sorted_scores_path.exists() else None,
+            time_stats_path=time_stats_path if time_stats_path.exists() else None,
         )
     except Exception as exc:
         click.echo(f"Error loading simulator: {exc}", err=True)
