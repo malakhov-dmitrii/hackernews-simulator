@@ -2,7 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 
-HF_REPO_ID = "malakhov/hackernews-simulator"
+HF_REPO_ID = "cskeleto/hackernews-simulator"
 
 ARTIFACT_MANIFEST = {
     "score_model.txt": "models/score_model.txt",
