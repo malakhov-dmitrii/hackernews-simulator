@@ -7,6 +7,8 @@
 
 An ML-powered tool that predicts your Hacker News score, generates realistic simulated comments, and explains *why* your post will perform the way it will. Uses LightGBM for scoring, LanceDB for finding similar historical posts, and Claude for comment simulation.
 
+![Demo](demo.gif)
+
 ## The Meta Test
 
 We ran hackernews-simulator on its own Show HN post. Here's what it predicted:
